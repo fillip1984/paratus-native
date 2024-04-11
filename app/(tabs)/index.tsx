@@ -5,7 +5,7 @@ export default function home() {
     // TODO: still can't figure out how to style the safe area's text. Tried StatusBar from expo but can't get it to comply
     <SafeAreaView className="bg-black">
       <View className="">
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false}>
           <View className="flex gap-2">
             <NatureCard />
             <NatureCard />
