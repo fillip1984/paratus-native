@@ -1,31 +1,34 @@
-import { StyleSheet } from 'react-native';
+import { SafeAreaView, ScrollView, Text, View } from "react-native";
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
-
-export default function TabOneScreen() {
+export default function home() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    // TODO: still can't figure out how to style the safe area's text. Tried StatusBar from expo but can't get it to comply
+    <SafeAreaView className="bg-black">
+      <View className="">
+        <ScrollView>
+          <View className="flex gap-2">
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+            <NatureCard />
+          </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
+const NatureCard = () => {
+  return (
+    <View className="h-48 w-full bg-stone-400">
+      <Text>Test</Text>
+    </View>
+  );
+};
