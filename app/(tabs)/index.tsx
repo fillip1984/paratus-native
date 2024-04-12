@@ -1,12 +1,16 @@
 import { SafeAreaView, ScrollView, Text, View } from "react-native";
 import {
+  Directions,
   Gesture,
   GestureDetector,
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 
 export default function home() {
-  const fling = Gesture.Fling().onEnd((e) => console.log({ msg: "flung", e }));
+  const fling = Gesture.Fling()
+    .cancelsTouchesInView(true)
+    .direction(Directions.LEFT | Directions.RIGHT)
+    .onEnd((e) => console.log({ msg: "flung", e }));
   return (
     // TODO: still can't figure out how to style the safe area's text. Tried StatusBar from expo but can't get it to comply
     <SafeAreaView className="bg-black">
