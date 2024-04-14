@@ -26,24 +26,6 @@ const Header = () => {
   );
 };
 
-const Timeline = () => {
-  return (
-    <FlexScrollView>
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-    </FlexScrollView>
-  );
-};
-
 const TimelineFilter = () => {
   const [selectedFilter, setSelectedFilter] = useState("Available");
 
@@ -70,5 +52,23 @@ const TimelineFilter = () => {
         <Text>All</Text>
       </Pressable>
     </Pressable>
+  );
+};
+
+const Timeline = () => {
+  return (
+    <FlexScrollView>
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+      <NatureCard />
+    </FlexScrollView>
   );
 };

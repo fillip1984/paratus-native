@@ -1,5 +1,4 @@
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
-import React from "react";
 import { View, Animated, Text } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
