@@ -1,8 +1,9 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome5 } from "@expo/vector-icons";
+import React from "react";
 import { View, Animated, Text } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
-export function NatureCard() {
+export default function TimelineCard() {
   return (
     <Swipeable
       renderLeftActions={LeftActions}
@@ -10,8 +11,7 @@ export function NatureCard() {
       onSwipeableOpen={(direction) => console.log(`open ${direction}`)}>
       <View className="flex h-24 w-full flex-row rounded bg-stone-300">
         <View className="flex items-center justify-center p-2">
-          <Feather name="sunrise" size={36} color="black" />
-          {/* <Feather name="sunset" size={24} color="black" /> */}
+          <FontAwesome5 name="running" size={24} color="black" />
         </View>
         <View className="flex flex-1 justify-center bg-yellow-200 pl-2">
           <Text className="text-xl text-black">Testing 123</Text>
