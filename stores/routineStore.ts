@@ -19,7 +19,12 @@ export const addRoutine = async (routine: InsertRoutine) => {
   return await localDb.insert(routines).values({
     name: routine.name,
     description: routine.description,
+    startDate: routine.startDate,
+    fromTime: routine.fromTime,
+    toTime: routine.toTime,
+    endDate: routine.endDate,
     repeat: routine.repeat,
+    repeatEnds: routine.repeatEnds,
   });
 };
 
@@ -29,7 +34,12 @@ export const updateRoutine = async (routine: SelectRoutine) => {
     .set({
       name: routine.name,
       description: routine.description,
+      startDate: routine.startDate,
+      fromTime: routine.fromTime,
+      toTime: routine.toTime,
+      endDate: routine.endDate,
       repeat: routine.repeat,
+      repeatEnds: routine.repeatEnds,
     })
     .where(eq(routines.id, routine.id));
 };

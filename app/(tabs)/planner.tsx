@@ -27,7 +27,7 @@ export default function PlannerScreen() {
           </Text>
         </Link>
         {routines.length === 0 && (
-          <View className="flex h-screen items-center justify-center">
+          <View className="flex h-1/2 items-center justify-center">
             <Text className="text-xl font-bold text-white">
               There are no routines, please add one
             </Text>

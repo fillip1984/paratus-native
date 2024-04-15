@@ -1,0 +1,1 @@
+ALTER TABLE `routine` RENAME COLUMN `neverEnds` TO `repeatEnds`;
