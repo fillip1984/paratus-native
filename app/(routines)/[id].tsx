@@ -69,6 +69,21 @@ export default function RoutineDetails() {
 
       if (id) {
         fetchData(id);
+      } else {
+        setscheduledDays([
+          {
+            id: -1,
+            label: "Sun",
+            active: false,
+            routineId: id ?? -1,
+          },
+          { id: -1, label: "Mon", active: false, routineId: id ?? -1 },
+          { id: -1, label: "Tue", active: false, routineId: id ?? -1 },
+          { id: -1, label: "Wed", active: false, routineId: id ?? -1 },
+          { id: -1, label: "Thur", active: false, routineId: id ?? -1 },
+          { id: -1, label: "Fri", active: false, routineId: id ?? -1 },
+          { id: -1, label: "Sat", active: false, routineId: id ?? -1 },
+        ]);
       }
     }, [id]),
   );
