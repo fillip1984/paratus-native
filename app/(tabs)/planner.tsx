@@ -5,14 +5,19 @@ import { Pressable, SafeAreaView, Text, View } from "react-native";
 
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
-import { SelectRoutine, findRoutines } from "@/stores/routineStore";
+import {
+  RoutineWithScheduledDays,
+  SelectRoutine,
+  findRoutines,
+} from "@/stores/routineStore";
 
 export default function PlannerScreen() {
-  const [routines, setRoutines] = useState<SelectRoutine[]>([]);
+  const [routines, setRoutines] = useState<RoutineWithScheduledDays[]>([]);
   useFocusEffect(
     useCallback(() => {
       const fetchData = async () => {
         const result = await findRoutines();
+        console.log({ result });
         setRoutines(result);
       };
       fetchData();
@@ -43,26 +48,28 @@ export default function PlannerScreen() {
   );
 }
 
-const RoutineCard = ({ routine }: { routine: SelectRoutine }) => {
+const RoutineCard = ({ routine }: { routine: RoutineWithScheduledDays }) => {
   return (
     <Link href={`/(routines)/${routine.id}`} asChild>
       <Pressable className="flex w-full rounded bg-stone-400 p-2">
         <Text className="text-2xl">{routine.name}</Text>
         <Text className="text-small">{routine.description}</Text>
         <View className="my-2">
-          <View className="my-2 flex flex-row items-center gap-2">
-            <Feather name="repeat" size={24} color="black" />
-            <Text className="font-bold text-black">Sun</Text>
-            <Text className="font-bold text-black opacity-20">Mon</Text>
-            <Text className="font-bold text-black opacity-20">Tue</Text>
-            <Text className="font-bold text-black opacity-20">Wed</Text>
-            <Text className="font-bold text-black opacity-20">Thurs</Text>
-            <Text className="font-bold text-black opacity-20">Fri</Text>
-            <Text className="font-bold text-black opacity-20">Sat</Text>
-          </View>
           <View className="my-2 flex-row items-center gap-3">
             <Feather name="clock" size={20} color="black" />
-            <Text>6:30 - 6:50</Text>
+            <Text>
+              {routine.fromTime} - {routine.toTime}
+            </Text>
+          </View>
+          <View className="my-2 flex flex-row items-center gap-2">
+            <Feather name="repeat" size={24} color="black" />
+            {routine.scheduledDays.map((scheduledDay) => (
+              <Text
+                key={scheduledDay.label}
+                className={`font-bold text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
+                {scheduledDay.label}
+              </Text>
+            ))}
           </View>
           <View className="my-2 flex-row items-center gap-2">
             <Ionicons name="trophy-outline" size={24} color="black" />

@@ -24,8 +24,16 @@ export const routinesRelations = relations(routines, ({ many }) => ({
   scheduledDays: many(scheduledDays),
 }));
 
-export const scheduledDays = sqliteTable("day", {
+export const scheduledDays = sqliteTable("scheduledDays", {
   id: integer("id").primaryKey(),
   label: text("label").notNull(),
-  selected: integer("selected", { mode: "boolean" }),
+  active: integer("selected", { mode: "boolean" }).notNull().default(false),
+  routineId: integer("routine_id").notNull(),
 });
+
+export const scheduledDaysRelations = relations(scheduledDays, ({ one }) => ({
+  routine: one(routines, {
+    fields: [scheduledDays.routineId],
+    references: [routines.id],
+  }),
+}));
