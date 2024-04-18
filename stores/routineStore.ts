@@ -48,7 +48,7 @@ export const addRoutine = async (
       .insert(scheduledDays)
       .values(
         routine.scheduledDays.map((d) => {
-          return { ...d, routineId: routineResult[0].id };
+          return { ...d, id: undefined, routineId: routineResult[0].id };
         }),
       )
       .returning();
