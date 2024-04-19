@@ -82,7 +82,6 @@ export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
 
     let scheduledDaysResult: SelectScheduledDay[] = [];
     if (routine.scheduledDays.length > 0) {
-      console.log("inserting updated scheduled days");
       scheduledDaysResult = await tx
         .insert(scheduledDays)
         .values(
@@ -98,7 +97,11 @@ export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
 };
 
 export const deleteRoutine = async (id: number) => {
-  await localDb.delete(routines).where(eq(routines.id, id));
+  await localDb.transaction(async (tx) => {
+    // TODO: having to delete scheduled days since cascade isn't working
+    await tx.delete(scheduledDays).where(eq(scheduledDays.routineId, id));
+    await tx.delete(routines).where(eq(routines.id, id));
+  });
   return true;
 };
 

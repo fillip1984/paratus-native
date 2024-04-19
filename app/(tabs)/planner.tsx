@@ -19,6 +19,7 @@ export default function PlannerScreen() {
       fetchData();
     }, []),
   );
+
   return (
     <SafeAreaView className="bg-black">
       <View className="flex h-screen bg-black px-2">
@@ -60,16 +61,18 @@ const RoutineCard = ({ routine }: { routine: RoutineWithScheduledDays }) => {
                 : ""}
             </Text>
           </View>
-          <View className="my-2 flex flex-row items-center gap-2">
-            <Feather name="repeat" size={24} color="black" />
-            {routine.scheduledDays.map((scheduledDay) => (
-              <Text
-                key={scheduledDay.label}
-                className={`font-bold text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
-                {scheduledDay.label}
-              </Text>
-            ))}
-          </View>
+          {routine.repeat && (
+            <View className="my-2 flex flex-row items-center gap-2">
+              <Feather name="repeat" size={24} color="black" />
+              {routine.scheduledDays.map((scheduledDay) => (
+                <Text
+                  key={scheduledDay.label}
+                  className={`font-bold text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
+                  {scheduledDay.label}
+                </Text>
+              ))}
+            </View>
+          )}
           <View className="my-2 flex-row items-center gap-2">
             <Ionicons name="trophy-outline" size={24} color="black" />
             <Text>1/10</Text>

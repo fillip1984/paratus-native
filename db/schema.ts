@@ -28,7 +28,10 @@ export const scheduledDays = sqliteTable("scheduledDays", {
   id: integer("id").primaryKey(),
   label: text("label").notNull(),
   active: integer("selected", { mode: "boolean" }).notNull().default(false),
-  routineId: integer("routine_id").notNull(),
+  // TODO: onDelete cascade isn't working
+  routineId: integer("routine_id")
+    .references(() => routines.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 export const scheduledDaysRelations = relations(scheduledDays, ({ one }) => ({

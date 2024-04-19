@@ -14,5 +14,6 @@ CREATE TABLE `scheduledDays` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`label` text NOT NULL,
 	`selected` integer DEFAULT false NOT NULL,
-	`routine_id` integer NOT NULL
+	`routine_id` integer NOT NULL,
+	FOREIGN KEY (`routine_id`) REFERENCES `routine`(`id`) ON UPDATE no action ON DELETE cascade
 );

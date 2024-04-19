@@ -5,7 +5,10 @@ import { openDatabaseSync } from "expo-sqlite/next";
 import * as schema from "./schema";
 import migrations from "../drizzle/migrations";
 
-export const localDb = drizzle(openDatabaseSync("paratus.db"), { schema });
+export const localDb = drizzle(openDatabaseSync("paratus.db"), {
+  schema,
+  logger: false,
+});
 
 const runMigrations = async () => {
   try {
