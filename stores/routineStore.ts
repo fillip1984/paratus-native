@@ -5,10 +5,11 @@ import { InferResultType } from "@/db/dbUtils";
 import { routines, scheduledDays } from "@/db/schema";
 
 export const findRoutines = async () => {
-  return await localDb.query.routines.findMany({
+  const result = await localDb.query.routines.findMany({
     orderBy: [asc(routines.name)],
     with: { scheduledDays: true },
   });
+  return result;
 };
 
 export const findRoutine = async (id: number) => {
@@ -20,11 +21,7 @@ export const findRoutine = async (id: number) => {
   });
 };
 
-export const addRoutine = async (
-  // routine: InsertRoutine,
-  // scheduledDay: Omit<InsertScheduledDay, "routineId">[],
-  routine: RoutineWithScheduledDays,
-) => {
+export const addRoutine = async (routine: RoutineWithScheduledDays) => {
   const result = await localDb.transaction(async (tx) => {
     const routineResult = await tx
       .insert(routines)
@@ -43,15 +40,17 @@ export const addRoutine = async (
     if (!routineResult) {
       throw Error("Failed to insert routine");
     }
-
-    const scheduledDaysResult = await tx
-      .insert(scheduledDays)
-      .values(
-        routine.scheduledDays.map((d) => {
-          return { ...d, id: undefined, routineId: routineResult[0].id };
-        }),
-      )
-      .returning();
+    let scheduledDaysResult: SelectScheduledDay[] = [];
+    if (routine.scheduledDays.length > 0) {
+      scheduledDaysResult = await tx
+        .insert(scheduledDays)
+        .values(
+          routine.scheduledDays.map((d) => {
+            return { ...d, id: undefined, routineId: routineResult[0].id };
+          }),
+        )
+        .returning();
+    }
     return { routineResult, scheduledDays: scheduledDaysResult };
   });
   return result;
@@ -80,14 +79,19 @@ export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
     await tx
       .delete(scheduledDays)
       .where(eq(scheduledDays.routineId, routineResult[0].id));
-    const scheduledDaysResult = await tx
-      .insert(scheduledDays)
-      .values(
-        routine.scheduledDays.map((d) => {
-          return { ...d, routineId: routineResult[0].id };
-        }),
-      )
-      .returning();
+
+    let scheduledDaysResult: SelectScheduledDay[] = [];
+    if (routine.scheduledDays.length > 0) {
+      console.log("inserting updated scheduled days");
+      scheduledDaysResult = await tx
+        .insert(scheduledDays)
+        .values(
+          routine.scheduledDays.map((d) => {
+            return { ...d, id: undefined, routineId: routineResult[0].id };
+          }),
+        )
+        .returning();
+    }
     return { routineResult, scheduledDays: scheduledDaysResult };
   });
   return result;

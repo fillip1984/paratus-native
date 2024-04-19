@@ -6,6 +6,7 @@ import { Pressable, SafeAreaView, Text, View } from "react-native";
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
 import { RoutineWithScheduledDays, findRoutines } from "@/stores/routineStore";
+import { timeFormatter } from "@/utils/date";
 
 export default function PlannerScreen() {
   const [routines, setRoutines] = useState<RoutineWithScheduledDays[]>([]);
@@ -53,7 +54,10 @@ const RoutineCard = ({ routine }: { routine: RoutineWithScheduledDays }) => {
           <View className="my-2 flex-row items-center gap-3">
             <Feather name="clock" size={20} color="black" />
             <Text>
-              {routine.fromTime} - {routine.toTime}
+              {timeFormatter.format(new Date(routine.fromTime))}{" "}
+              {routine.toTime
+                ? `- ${timeFormatter.format(new Date(routine.toTime))}`
+                : ""}
             </Text>
           </View>
           <View className="my-2 flex flex-row items-center gap-2">

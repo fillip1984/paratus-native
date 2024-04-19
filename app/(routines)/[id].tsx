@@ -1,9 +1,11 @@
+import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   Alert,
   Pressable,
   SafeAreaView,
+  ScrollView,
   Switch,
   Text,
   TextInput,
@@ -25,10 +27,10 @@ export default function RoutineDetails() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState("04/03/2024");
-  const [endDate, setEndDate] = useState("04/15/2024");
-  const [fromTime, setFromTime] = useState("8:00 AM");
-  const [toTime, setToTime] = useState("8:45 AM");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [fromTime, setFromTime] = useState(new Date());
+  const [toTime, setToTime] = useState(new Date());
   const [repeat, setRepeat] = useState(false);
   const [repeatEnds, setRepeatEnds] = useState(false);
   const [scheduledDays, setscheduledDays] = useState<SelectScheduledDay[]>([]);
@@ -40,13 +42,13 @@ export default function RoutineDetails() {
         if (result) {
           setName(result.name);
           setDescription(result.description ?? "");
-          setStartDate(result.startDate);
-          setEndDate(result.endDate ?? "");
-          setFromTime(result.fromTime);
-          setToTime(result.toTime ?? "");
+          setStartDate(new Date(result.startDate));
+          setEndDate(result.endDate ? new Date(result.endDate) : new Date());
+          setFromTime(new Date(result.fromTime));
+          setToTime(new Date(result.toTime));
           setRepeat(result.repeat === true);
 
-          if (result.scheduledDays) {
+          if (result.scheduledDays.length > 0) {
             setscheduledDays(result.scheduledDays);
           } else {
             setscheduledDays([
@@ -94,13 +96,13 @@ export default function RoutineDetails() {
         id,
         name,
         description,
-        startDate,
-        fromTime,
-        toTime,
-        endDate,
+        startDate: startDate.toString(),
+        fromTime: fromTime.toString(),
+        toTime: toTime?.toString() ?? "",
+        endDate: repeat ? endDate.toString() : null,
         repeat,
         repeatEnds,
-        scheduledDays,
+        scheduledDays: repeat ? scheduledDays : [],
       });
       if (result) {
         router.dismiss();
@@ -110,13 +112,13 @@ export default function RoutineDetails() {
         id: -1,
         name,
         description,
-        startDate,
-        fromTime,
-        toTime,
-        endDate,
+        startDate: startDate.toString(),
+        fromTime: fromTime.toString(),
+        toTime: toTime?.toString() ?? "",
+        endDate: repeat ? endDate.toString() : null,
         repeat,
         repeatEnds,
-        scheduledDays,
+        scheduledDays: repeat ? scheduledDays : [],
       });
       if (result) {
         router.dismiss();
@@ -146,103 +148,136 @@ export default function RoutineDetails() {
     <SafeAreaView className="bg-stone-800">
       <View className="flex h-full gap-8 bg-stone-900 px-2">
         <TopActionsBar saveRoutine={handleSaveRoutine} />
-        {/* TODO: get react-native-keyboard-accessory to work, it flew across the view and didn't stay where you'd expect it to */}
-        {/* <KeyboardAccessoryNavigation
-          onNext={() => handleFocus(1)}
-          onPrevious={() => handleFocus(-1)}
-        /> */}
-
-        <View className="flex flex-1 gap-8">
-          <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
-            <TextInput
-              className="px-3 py-2 text-xl text-white placeholder:text-stone-500"
-              value={name}
-              onChangeText={(e) => setName(e)}
-              placeholder="Name of routine"
-            />
-            <TextInput
-              className="min-h-[100px] border-t border-t-stone-700 px-3 py-2 text-xl text-white placeholder:text-stone-500"
-              multiline
-              numberOfLines={3}
-              value={description}
-              onChangeText={(e) => setDescription(e)}
-              placeholder="Description of routine"
-            />
-          </View>
-
-          <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
-            <View className="flex-row items-center justify-between px-3 py-2">
-              <Text className="text-xl font-semibold text-white">From</Text>
+        <ScrollView>
+          <View className="flex flex-1 gap-8">
+            <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
               <TextInput
-                className="rounded bg-slate-400/80 p-1 text-xl"
-                value={fromTime}
-                onChangeText={(e) => setFromTime(e)}
+                className="px-3 py-2 text-xl text-white placeholder:text-stone-500"
+                value={name}
+                onChangeText={(e) => setName(e)}
+                placeholder="Name of routine"
               />
-            </View>
-            <View className="flex-row items-center justify-between px-3 py-2">
-              <Text className="text-xl font-semibold text-white">To</Text>
               <TextInput
-                className="rounded bg-slate-400/80 p-1 text-xl"
-                value={toTime}
-                onChangeText={(e) => setToTime(e)}
-              />
-            </View>
-          </View>
-
-          <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
-            <View className="flex-row items-center justify-between px-3 py-2">
-              <Text className="text-xl font-semibold text-white">
-                {repeat ? "Starts" : "On"}
-              </Text>
-              <TextInput
-                className="rounded bg-slate-400/80 p-1 text-xl"
-                value={startDate}
-                onChangeText={(e) => setStartDate(e)}
+                className="min-h-[100px] border-t border-t-stone-700 px-3 py-2 text-xl text-white placeholder:text-stone-500"
+                multiline
+                numberOfLines={3}
+                value={description}
+                onChangeText={(e) => setDescription(e)}
+                placeholder="Description of routine"
               />
             </View>
 
-            <View className="flex-row items-center justify-between px-3 py-2">
-              <Text className="text-xl font-semibold text-white">Repeat</Text>
-              <Switch value={repeat} onChange={() => setRepeat(!repeat)} />
+            <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
+              <View className="flex-row items-center justify-between px-3 py-2">
+                <Text className="text-xl font-semibold text-white">From</Text>
+                <RNDateTimePicker
+                  value={fromTime}
+                  onChange={(_e, d) => {
+                    if (d) setFromTime(d);
+                  }}
+                  mode="time"
+                  themeVariant="dark"
+                  accentColor="white"
+                />
+              </View>
+              <View className="flex-row items-center justify-between px-3 py-2">
+                <Text className="text-xl font-semibold text-white">To</Text>
+                <RNDateTimePicker
+                  value={toTime}
+                  onChange={(_, d) => {
+                    if (d) setToTime(d);
+                  }}
+                  mode="time"
+                  themeVariant="dark"
+                  accentColor="white"
+                />
+              </View>
             </View>
 
-            {repeat && (
-              <>
-                <View className="flex-row items-center justify-between px-3 py-2">
-                  <Text className="text-xl font-semibold text-white">Ends</Text>
-                  <TextInput
-                    className="rounded bg-slate-400/80 p-1 text-xl"
-                    value={endDate}
-                    onChangeText={(e) => setEndDate(e)}
-                  />
-                </View>
-                <View className="my-2 flex-row justify-center gap-3">
-                  {scheduledDays.map((day) => (
-                    <Pressable
-                      key={day.label}
-                      onPress={() => {
-                        setscheduledDays((prev) =>
-                          prev.map((prevDay) => {
-                            if (prevDay.label === day.label) {
-                              return { ...day, active: !day.active };
-                            } else {
-                              return prevDay;
-                            }
-                          }),
-                        );
+            <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
+              <View className="flex-row items-center justify-between px-3 py-2">
+                <Text className="text-xl font-semibold text-white">
+                  {repeat ? "Starts" : "On"}
+                </Text>
+                <RNDateTimePicker
+                  value={startDate}
+                  onChange={(_, d) => {
+                    if (d) setStartDate(d);
+                  }}
+                  mode="date"
+                  themeVariant="dark"
+                  accentColor="white"
+                />
+              </View>
+
+              <View className="flex-row items-center justify-between px-3 py-2">
+                <Text className="text-xl font-semibold text-white">Repeat</Text>
+                <Switch value={repeat} onChange={() => setRepeat(!repeat)} />
+              </View>
+
+              {repeat && (
+                <>
+                  {/* <PickerIOS themeVariant="dark">
+                    <Picker.Item label="Daily" value="daily" />
+                    <Picker.Item label="Weekly" value="weekly" />
+                    <Picker.Item label="Monthly" value="monthly" />
+                    <Picker.Item label="Yearly" value="yearly" />
+                  </PickerIOS> */}
+
+                  {/* <RNPickerSelect
+                    darkTheme
+                    onValueChange={(value) => console.log(value)}
+                    items={[
+                      { label: "JavaScript", value: "JavaScript" },
+                      { label: "TypeScript", value: "TypeScript" },
+                      { label: "Python", value: "Python" },
+                      { label: "Java", value: "Java" },
+                      { label: "C++", value: "C++" },
+                      { label: "C", value: "C" },
+                    ]}
+                  /> */}
+                  <View className="flex-row items-center justify-between px-3 py-2">
+                    <Text className="text-xl font-semibold text-white">
+                      Ends
+                    </Text>
+                    <RNDateTimePicker
+                      value={endDate ?? new Date()}
+                      onChange={(_, d) => {
+                        if (d) setEndDate(d);
                       }}
-                      className={`${day.active ? "bg-stone-300" : "bg-black"} flex h-14 w-14 items-center justify-center rounded-full`}>
-                      <Text
-                        className={`${day.active ? "text-black" : "text-white"}`}>
-                        {day.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </>
-            )}
+                      mode="date"
+                      themeVariant="dark"
+                      accentColor="white"
+                    />
+                  </View>
+                  <View className="my-2 flex-row justify-center gap-3">
+                    {scheduledDays.map((day) => (
+                      <Pressable
+                        key={day.label}
+                        onPress={() => {
+                          setscheduledDays((prev) =>
+                            prev.map((prevDay) => {
+                              if (prevDay.label === day.label) {
+                                return { ...day, active: !day.active };
+                              } else {
+                                return prevDay;
+                              }
+                            }),
+                          );
+                        }}
+                        className={`${day.active ? "bg-stone-300" : "bg-black"} flex h-14 w-14 items-center justify-center rounded-full`}>
+                        <Text
+                          className={`${day.active ? "text-black" : "text-white"}`}>
+                          {day.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </>
+              )}
+            </View>
           </View>
-        </View>
+        </ScrollView>
 
         {id && (
           <View className="mb-2">
