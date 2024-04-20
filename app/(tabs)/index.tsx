@@ -1,27 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, SafeAreaView, Text, View } from "react-native";
 
+import TimelineCard from "../_components/TimelineCard";
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
 import { NatureCard } from "@/app/_components/NatureCard";
+import { SelectActivity, activities } from "@/db/schema";
+import { findActivities } from "@/stores/activityStore";
 
-export default function home() {
+export default function Home() {
+  const [activities, setActivities] = useState<SelectActivity[]>([]);
+  useEffect(() => {
+    async function fetchData() {
+      const result = await findActivities({ date: new Date(), filter: "All" });
+      setActivities(result);
+    }
+
+    fetchData();
+  }, []);
+
   return (
     // TODO: still can't figure out how to style the safe area's text. Tried StatusBar from expo but can't get it to comply
     <SafeAreaView className="bg-black">
       <View className="h-screen">
-        <Header />
+        <Header activities={activities} />
         <TimelineFilter />
-        <Timeline />
+        <Timeline activities={activities} />
       </View>
     </SafeAreaView>
   );
 }
 
-const Header = () => {
+const Header = ({ activities }: { activities: SelectActivity[] }) => {
   return (
     <Text className="text-center text-2xl text-white">
-      12 <Text className="text-white/50">activities for</Text> Wednesday
+      {activities.length} <Text className="text-white/50">activities for</Text>{" "}
+      Wednesday
     </Text>
   );
 };
@@ -55,9 +69,13 @@ const TimelineFilter = () => {
   );
 };
 
-const Timeline = () => {
+const Timeline = ({ activities }: { activities: SelectActivity[] }) => {
   return (
     <FlexScrollView>
+      {activities.map((activity) => (
+        <TimelineCard key={activity.id} activity={activity} />
+      ))}
+      {/* <NatureCard />
       <NatureCard />
       <NatureCard />
       <NatureCard />
@@ -67,8 +85,7 @@ const Timeline = () => {
       <NatureCard />
       <NatureCard />
       <NatureCard />
-      <NatureCard />
-      <NatureCard />
+      <NatureCard /> */}
     </FlexScrollView>
   );
 };

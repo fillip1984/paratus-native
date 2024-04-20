@@ -25,7 +25,7 @@ export const findRoutine = async (id: number) => {
   });
 };
 
-export const addRoutine = async (routine: RoutineWithScheduledDays) => {
+export const createRoutine = async (routine: RoutineWithScheduledDays) => {
   const result = await localDb.transaction(async (tx) => {
     const routineResult = await tx
       .insert(routines)

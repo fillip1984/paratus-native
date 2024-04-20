@@ -2,7 +2,14 @@ import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { View, Animated, Text } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
-export default function TimelineCard() {
+import { SelectActivity } from "@/db/schema";
+import { formatHH_mm } from "@/utils/date";
+
+export default function TimelineCard({
+  activity,
+}: {
+  activity: SelectActivity;
+}) {
   return (
     <Swipeable
       renderLeftActions={LeftActions}
@@ -13,10 +20,12 @@ export default function TimelineCard() {
           <FontAwesome5 name="running" size={24} color="black" />
         </View>
         <View className="flex flex-1 justify-center bg-yellow-200 pl-2">
-          <Text className="text-xl text-black">Testing 123</Text>
+          <Text className="text-xl text-black">{activity.name}</Text>
           <View className="flex flex-row items-center gap-1">
             <Feather name="clock" size={20} color="black" />
-            <Text className="text-xl text-black">5:38</Text>
+            <Text className="text-xl text-black">
+              {formatHH_mm(activity.start)}-{formatHH_mm(activity.end)}
+            </Text>
           </View>
         </View>
       </View>

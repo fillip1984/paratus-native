@@ -13,13 +13,20 @@ import {
 } from "react-native";
 
 import { RepeatCadenceType, SelectScheduledDay } from "@/db/schema";
+import { createActivitiesFromRoutine } from "@/stores/activityStore";
 import {
-  addRoutine,
+  createRoutine,
   deleteRoutine,
   findRoutine,
   updateRoutine,
 } from "@/stores/routineStore";
-import { MM_DD_Formatter, parseDateOrToday } from "@/utils/date";
+import {
+  formatHH_mm,
+  formatMM_dd,
+  formatYYYY_MM_dd,
+  parseDateOrToday,
+  parseHH_mm,
+} from "@/utils/date";
 
 export default function RoutineDetails() {
   const params = useLocalSearchParams();
@@ -47,8 +54,8 @@ export default function RoutineDetails() {
           setName(result.name);
           setDescription(result.description ?? "");
           setStartDate(new Date(result.startDate));
-          setFromTime(new Date(result.fromTime));
-          setToTime(new Date(result.toTime));
+          setFromTime(parseHH_mm(result.fromTime));
+          setToTime(parseHH_mm(result.toTime));
           setEndDate(result.endDate ? new Date(result.endDate) : new Date());
           setRepeat(result.repeat === true);
           setRepeatEnds(result.repeatEnds === true);
@@ -108,7 +115,7 @@ export default function RoutineDetails() {
     return [
       {
         id: -1,
-        label: MM_DD_Formatter.format(d),
+        label: formatMM_dd(d),
         active: true,
         routineId: -1,
       } as SelectScheduledDay,
@@ -121,10 +128,10 @@ export default function RoutineDetails() {
         id,
         name,
         description,
-        startDate: startDate.toString(),
-        fromTime: fromTime.toString(),
-        toTime: toTime?.toString() ?? "",
-        endDate: repeat ? endDate.toString() : null,
+        startDate: formatYYYY_MM_dd(startDate),
+        fromTime: formatHH_mm(fromTime),
+        toTime: formatHH_mm(toTime),
+        endDate: repeat ? formatYYYY_MM_dd(endDate) : null,
         repeat,
         repeatEnds,
         repeatCadence,
@@ -134,14 +141,14 @@ export default function RoutineDetails() {
         router.dismiss();
       }
     } else {
-      const result = await addRoutine({
+      const result = await createRoutine({
         id: -1,
         name,
         description,
-        startDate: startDate.toString(),
-        fromTime: fromTime.toString(),
-        toTime: toTime?.toString() ?? "",
-        endDate: repeat ? endDate.toString() : null,
+        startDate: formatYYYY_MM_dd(startDate),
+        fromTime: formatHH_mm(fromTime),
+        toTime: formatHH_mm(toTime),
+        endDate: repeat ? formatYYYY_MM_dd(endDate) : null,
         repeat,
         repeatEnds,
         repeatCadence,
@@ -423,7 +430,12 @@ export default function RoutineDetails() {
         </ScrollView>
 
         {id && (
-          <View className="mb-2">
+          <View className="mb-2 flex-row gap-2">
+            <Pressable
+              onPress={() => createActivitiesFromRoutine(id)}
+              className="flex flex-1 items-center rounded border border-stone-300 p-2">
+              <Text className="text-2xl text-stone-300">Rebuild</Text>
+            </Pressable>
             <Pressable
               onPress={handleDeleteConfirmation}
               className="flex items-center rounded border border-red-500 p-2">

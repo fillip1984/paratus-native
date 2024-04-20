@@ -26,9 +26,10 @@ export const routines = sqliteTable("routine", {
 
 export const routinesRelations = relations(routines, ({ many }) => ({
   scheduledDays: many(scheduledDays),
+  activities: many(activities),
 }));
 
-export const scheduledDays = sqliteTable("scheduledDays", {
+export const scheduledDays = sqliteTable("scheduledDay", {
   id: integer("id").primaryKey(),
   label: text("label").notNull(),
   active: integer("selected", { mode: "boolean" }).notNull().default(false),
@@ -45,10 +46,30 @@ export const scheduledDaysRelations = relations(scheduledDays, ({ one }) => ({
   }),
 }));
 
+export const activities = sqliteTable("activity", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  start: text("start").notNull(),
+  end: text("end").notNull(),
+  routineId: integer("routine_id")
+    .references(() => routines.id, { onDelete: "cascade" })
+    .notNull(),
+});
+
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  routine: one(routines, {
+    fields: [activities.routineId],
+    references: [routines.id],
+  }),
+}));
+
 export type SelectRoutine = typeof routines.$inferSelect;
 export type InsertRoutine = typeof routines.$inferInsert;
 export type SelectScheduledDay = typeof scheduledDays.$inferSelect;
 export type InsertScheduledDay = typeof scheduledDays.$inferInsert;
+export type SelectActivity = typeof activities.$inferSelect;
+export type InsertActivity = typeof activities.$inferInsert;
 
 export type RoutineWithScheduledDays = InferResultType<
   "routines",

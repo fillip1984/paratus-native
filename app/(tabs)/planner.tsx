@@ -7,7 +7,7 @@ import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
 import { RoutineWithScheduledDays } from "@/db/schema";
 import { findRoutines } from "@/stores/routineStore";
-import { timeFormatter } from "@/utils/date";
+import { parseHH_mm } from "@/utils/date";
 
 export default function PlannerScreen() {
   const [routines, setRoutines] = useState<RoutineWithScheduledDays[]>([]);
@@ -56,10 +56,7 @@ const RoutineCard = ({ routine }: { routine: RoutineWithScheduledDays }) => {
           <View className="my-2 flex-row items-center gap-3">
             <Feather name="clock" size={20} color="black" />
             <Text>
-              {timeFormatter.format(new Date(routine.fromTime))}{" "}
-              {routine.toTime
-                ? `- ${timeFormatter.format(new Date(routine.toTime))}`
-                : ""}
+              {routine.fromTime} {routine.toTime ? `- ${routine.toTime}` : ""}
             </Text>
           </View>
           {routine.repeat && (
