@@ -1,7 +1,6 @@
 import RNDateTimePicker from "@react-native-community/datetimepicker";
-import { parse } from "date-fns";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -54,6 +53,7 @@ export default function RoutineDetails() {
           setRepeat(result.repeat === true);
           setRepeatEnds(result.repeatEnds === true);
           setRepeatCadence(result.repeatCadence);
+          setScheduledDays(result.scheduledDays);
         }
       };
 
@@ -63,18 +63,25 @@ export default function RoutineDetails() {
     }, [id, isNew]),
   );
 
-  useEffect(() => {
-    switch (repeatCadence) {
+  const buildScheduledDays = (v: string) => {
+    switch (v) {
+      case "Daily":
+        setScheduledDays([]);
+        break;
       case "Weekly":
         setScheduledDays(buildWeeklyScheduledDays());
         break;
       case "Monthly":
         setScheduledDays(buildMonthlyScheduledDays());
         break;
+      case "Yearly":
+        buildYearlyScheduledDays(new Date());
+        break;
       default:
-        setScheduledDays([]);
+        throw Error("Unknown repeat cadence: " + repeatCadence);
     }
-  }, [repeatCadence]);
+    setRepeatCadence(v);
+  };
 
   const buildWeeklyScheduledDays = () => {
     return [
@@ -277,28 +284,40 @@ export default function RoutineDetails() {
               <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
                 <View className="flex-row">
                   <Pressable
-                    onPress={() => setRepeatCadence("Daily")}
+                    onPress={() => {
+                      buildScheduledDays("Daily");
+                      // setRepeatCadence("Daily");
+                    }}
                     className={`w-1/4 rounded-l ${repeatCadence === "Daily" ? "bg-stone-400" : "bg-stone-600"} p-2`}>
                     <Text className="text-center text-xl text-white ">
                       Daily
                     </Text>
                   </Pressable>
                   <Pressable
-                    onPress={() => setRepeatCadence("Weekly")}
+                    onPress={() => {
+                      buildScheduledDays("Weekly");
+                      // setRepeatCadence("Weekly");
+                    }}
                     className={`w-1/4 ${repeatCadence === "Weekly" ? "bg-stone-400" : "bg-stone-600"} p-2`}>
                     <Text className="text-center text-xl text-white">
                       Weekly
                     </Text>
                   </Pressable>
                   <Pressable
-                    onPress={() => setRepeatCadence("Monthly")}
+                    onPress={() => {
+                      buildScheduledDays("Monthly");
+                      // setRepeatCadence("Monthly");
+                    }}
                     className={`w-1/4 ${repeatCadence === "Monthly" ? "bg-stone-400" : "bg-stone-600"} p-2`}>
                     <Text className="text-center text-xl text-white">
                       Monthly
                     </Text>
                   </Pressable>
                   <Pressable
-                    onPress={() => setRepeatCadence("Yearly")}
+                    onPress={() => {
+                      buildScheduledDays("Yearly");
+                      // setRepeatCadence("Yearly");
+                    }}
                     className={`w-1/4 ${repeatCadence === "Yearly" ? "bg-stone-400" : "bg-stone-600"} rounded-r p-2`}>
                     <Text className="text-center text-xl text-white">
                       Yearly
