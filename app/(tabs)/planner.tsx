@@ -5,7 +5,8 @@ import { Pressable, SafeAreaView, Text, View } from "react-native";
 
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
-import { RoutineWithScheduledDays, findRoutines } from "@/stores/routineStore";
+import { RoutineWithScheduledDays } from "@/db/schema";
+import { findRoutines } from "@/stores/routineStore";
 import { timeFormatter } from "@/utils/date";
 
 export default function PlannerScreen() {
@@ -64,13 +65,43 @@ const RoutineCard = ({ routine }: { routine: RoutineWithScheduledDays }) => {
           {routine.repeat && (
             <View className="my-2 flex flex-row items-center gap-2">
               <Feather name="repeat" size={24} color="black" />
-              {routine.scheduledDays.map((scheduledDay) => (
-                <Text
-                  key={scheduledDay.label}
-                  className={`font-bold text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
-                  {scheduledDay.label}
-                </Text>
-              ))}
+              {routine.repeatCadence === "Daily" && <Text>Daily</Text>}
+              {routine.repeatCadence === "Weekly" && (
+                <View className="flex flex-row gap-2">
+                  <Text>Weekly:</Text>
+                  {routine.scheduledDays.map((scheduledDay) => (
+                    <Text
+                      key={scheduledDay.label}
+                      className={`text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
+                      {scheduledDay.label}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              {routine.repeatCadence === "Monthly" && (
+                <View className="mr-10 flex-row flex-wrap">
+                  <Text>Monthly: </Text>
+                  {routine.scheduledDays.map((scheduledDay) => (
+                    <Text
+                      key={scheduledDay.label}
+                      className={`text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
+                      {scheduledDay.label},{" "}
+                    </Text>
+                  ))}
+                </View>
+              )}
+              {routine.repeatCadence === "Yearly" && (
+                <View className="mr-10 flex-row flex-wrap">
+                  <Text>Yearly: </Text>
+                  {routine.scheduledDays.map((scheduledDay) => (
+                    <Text
+                      key={scheduledDay.label}
+                      className={`text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
+                      {scheduledDay.label}
+                    </Text>
+                  ))}
+                </View>
+              )}
             </View>
           )}
           <View className="my-2 flex-row items-center gap-2">

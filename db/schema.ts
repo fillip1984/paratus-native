@@ -1,6 +1,8 @@
 import { relations } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { InferResultType } from "./dbUtils";
+
 export const routines = sqliteTable("routine", {
   // TODO: try again in react-native 74, https://github.com/facebook/hermes/issues/948
   // id: text("id")
@@ -15,9 +17,11 @@ export const routines = sqliteTable("routine", {
   endDate: text("endDate"),
   repeat: integer("repeat", { mode: "boolean" }).default(false),
   repeatEnds: integer("repeatEnds", { mode: "boolean" }).default(false),
-  // days:
-  // skipInteractionType:
-  // completeInteractionType:
+  repeatCadence: text("repeatCadence", {
+    enum: ["Daily", "Weekly", "Monthly", "Yearly"],
+  }),
+  // onSkip: skipInteractionType??
+  // onComplete: completeInteractionType
 });
 
 export const routinesRelations = relations(routines, ({ many }) => ({
@@ -40,3 +44,20 @@ export const scheduledDaysRelations = relations(scheduledDays, ({ one }) => ({
     references: [routines.id],
   }),
 }));
+
+export type SelectRoutine = typeof routines.$inferSelect;
+export type InsertRoutine = typeof routines.$inferInsert;
+export type SelectScheduledDay = typeof scheduledDays.$inferSelect;
+export type InsertScheduledDay = typeof scheduledDays.$inferInsert;
+
+export type RoutineWithScheduledDays = InferResultType<
+  "routines",
+  { scheduledDays: true }
+>;
+
+export type RepeatCadenceType =
+  | "Daily"
+  | "Weekly"
+  | "Monthly"
+  | "Yearly"
+  | null;

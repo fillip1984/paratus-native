@@ -1,6 +1,7 @@
 import RNDateTimePicker from "@react-native-community/datetimepicker";
+import { parse } from "date-fns";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -12,18 +13,20 @@ import {
   View,
 } from "react-native";
 
+import { RepeatCadenceType, SelectScheduledDay } from "@/db/schema";
 import {
-  SelectScheduledDay,
   addRoutine,
   deleteRoutine,
   findRoutine,
   updateRoutine,
 } from "@/stores/routineStore";
+import { MM_DD_Formatter, parseDateOrToday } from "@/utils/date";
 
 export default function RoutineDetails() {
   const params = useLocalSearchParams();
   const id =
     params["id"] === "new" ? undefined : parseInt(params["id"] as string, 10);
+  const isNew = id === undefined;
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -33,7 +36,9 @@ export default function RoutineDetails() {
   const [toTime, setToTime] = useState(new Date());
   const [repeat, setRepeat] = useState(false);
   const [repeatEnds, setRepeatEnds] = useState(false);
-  const [scheduledDays, setscheduledDays] = useState<SelectScheduledDay[]>([]);
+  const [repeatCadence, setRepeatCadence] =
+    useState<RepeatCadenceType>("Daily");
+  const [scheduledDays, setScheduledDays] = useState<SelectScheduledDay[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -43,55 +48,68 @@ export default function RoutineDetails() {
           setName(result.name);
           setDescription(result.description ?? "");
           setStartDate(new Date(result.startDate));
-          setEndDate(result.endDate ? new Date(result.endDate) : new Date());
           setFromTime(new Date(result.fromTime));
           setToTime(new Date(result.toTime));
+          setEndDate(result.endDate ? new Date(result.endDate) : new Date());
           setRepeat(result.repeat === true);
-
-          if (result.scheduledDays.length > 0) {
-            setscheduledDays(result.scheduledDays);
-          } else {
-            setscheduledDays([
-              {
-                id: -1,
-                label: "Sun",
-                active: false,
-                routineId: id ?? -1,
-              },
-              { id: -1, label: "Mon", active: false, routineId: id ?? -1 },
-              { id: -1, label: "Tue", active: false, routineId: id ?? -1 },
-              { id: -1, label: "Wed", active: false, routineId: id ?? -1 },
-              { id: -1, label: "Thur", active: false, routineId: id ?? -1 },
-              { id: -1, label: "Fri", active: false, routineId: id ?? -1 },
-              { id: -1, label: "Sat", active: false, routineId: id ?? -1 },
-            ]);
-          }
+          setRepeatEnds(result.repeatEnds === true);
+          setRepeatCadence(result.repeatCadence);
         }
       };
 
-      if (id) {
+      if (!isNew) {
         fetchData(id);
-      } else {
-        setscheduledDays([
-          {
-            id: -1,
-            label: "Sun",
-            active: false,
-            routineId: id ?? -1,
-          },
-          { id: -1, label: "Mon", active: false, routineId: id ?? -1 },
-          { id: -1, label: "Tue", active: false, routineId: id ?? -1 },
-          { id: -1, label: "Wed", active: false, routineId: id ?? -1 },
-          { id: -1, label: "Thur", active: false, routineId: id ?? -1 },
-          { id: -1, label: "Fri", active: false, routineId: id ?? -1 },
-          { id: -1, label: "Sat", active: false, routineId: id ?? -1 },
-        ]);
       }
-    }, [id]),
+    }, [id, isNew]),
   );
 
+  useEffect(() => {
+    switch (repeatCadence) {
+      case "Weekly":
+        setScheduledDays(buildWeeklyScheduledDays());
+        break;
+      case "Monthly":
+        setScheduledDays(buildMonthlyScheduledDays());
+        break;
+      default:
+        setScheduledDays([]);
+    }
+  }, [repeatCadence]);
+
+  const buildWeeklyScheduledDays = () => {
+    return [
+      { id: -1, label: "Sun", active: false, routineId: -1 },
+      { id: -1, label: "Mon", active: false, routineId: -1 },
+      { id: -1, label: "Tue", active: false, routineId: -1 },
+      { id: -1, label: "Wed", active: false, routineId: -1 },
+      { id: -1, label: "Thur", active: false, routineId: -1 },
+      { id: -1, label: "Fri", active: false, routineId: -1 },
+      { id: -1, label: "Sat", active: false, routineId: -1 },
+    ];
+  };
+
+  const buildMonthlyScheduledDays = () => {
+    return Array.from(Array(31).keys()).map((d) => {
+      return {
+        label: (d + 1).toString(),
+        active: false,
+      } as SelectScheduledDay;
+    });
+  };
+
+  const buildYearlyScheduledDays = (d: Date) => {
+    return [
+      {
+        id: -1,
+        label: MM_DD_Formatter.format(d),
+        active: true,
+        routineId: -1,
+      } as SelectScheduledDay,
+    ];
+  };
+
   const handleSaveRoutine = async () => {
-    if (id) {
+    if (!isNew) {
       const result = await updateRoutine({
         id,
         name,
@@ -102,6 +120,7 @@ export default function RoutineDetails() {
         endDate: repeat ? endDate.toString() : null,
         repeat,
         repeatEnds,
+        repeatCadence,
         scheduledDays: repeat ? scheduledDays : [],
       });
       if (result) {
@@ -118,6 +137,7 @@ export default function RoutineDetails() {
         endDate: repeat ? endDate.toString() : null,
         repeat,
         repeatEnds,
+        repeatCadence,
         scheduledDays: repeat ? scheduledDays : [],
       });
       if (result) {
@@ -212,50 +232,96 @@ export default function RoutineDetails() {
 
               <View className="flex-row items-center justify-between px-3 py-2">
                 <Text className="text-xl font-semibold text-white">Repeat</Text>
-                <Switch value={repeat} onChange={() => setRepeat(!repeat)} />
+                <Switch
+                  value={repeat}
+                  onChange={() => setRepeat((prev) => !prev)}
+                />
               </View>
 
               {repeat && (
                 <>
-                  {/* <PickerIOS themeVariant="dark">
-                    <Picker.Item label="Daily" value="daily" />
-                    <Picker.Item label="Weekly" value="weekly" />
-                    <Picker.Item label="Monthly" value="monthly" />
-                    <Picker.Item label="Yearly" value="yearly" />
-                  </PickerIOS> */}
-
-                  {/* <RNPickerSelect
-                    darkTheme
-                    onValueChange={(value) => console.log(value)}
-                    items={[
-                      { label: "JavaScript", value: "JavaScript" },
-                      { label: "TypeScript", value: "TypeScript" },
-                      { label: "Python", value: "Python" },
-                      { label: "Java", value: "Java" },
-                      { label: "C++", value: "C++" },
-                      { label: "C", value: "C" },
-                    ]}
-                  /> */}
                   <View className="flex-row items-center justify-between px-3 py-2">
                     <Text className="text-xl font-semibold text-white">
                       Ends
                     </Text>
-                    <RNDateTimePicker
-                      value={endDate ?? new Date()}
-                      onChange={(_, d) => {
-                        if (d) setEndDate(d);
-                      }}
-                      mode="date"
-                      themeVariant="dark"
-                      accentColor="white"
+
+                    <Switch
+                      value={repeatEnds}
+                      onChange={() => setRepeatEnds((prev) => !prev)}
                     />
                   </View>
-                  <View className="my-2 flex-row justify-center gap-3">
+
+                  {repeatEnds && (
+                    <View className="flex-row items-center justify-between px-3 py-2">
+                      <Text className="text-xl font-semibold text-white">
+                        Ends On
+                      </Text>
+
+                      <RNDateTimePicker
+                        value={endDate ?? new Date()}
+                        onChange={(_, d) => {
+                          if (d) setEndDate(d);
+                        }}
+                        mode="date"
+                        themeVariant="dark"
+                        accentColor="white"
+                        disabled={!repeatEnds}
+                      />
+                    </View>
+                  )}
+                </>
+              )}
+            </View>
+
+            {repeat && (
+              <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
+                <View className="flex-row">
+                  <Pressable
+                    onPress={() => setRepeatCadence("Daily")}
+                    className={`w-1/4 rounded-l ${repeatCadence === "Daily" ? "bg-stone-400" : "bg-stone-600"} p-2`}>
+                    <Text className="text-center text-xl text-white ">
+                      Daily
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setRepeatCadence("Weekly")}
+                    className={`w-1/4 ${repeatCadence === "Weekly" ? "bg-stone-400" : "bg-stone-600"} p-2`}>
+                    <Text className="text-center text-xl text-white">
+                      Weekly
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setRepeatCadence("Monthly")}
+                    className={`w-1/4 ${repeatCadence === "Monthly" ? "bg-stone-400" : "bg-stone-600"} p-2`}>
+                    <Text className="text-center text-xl text-white">
+                      Monthly
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setRepeatCadence("Yearly")}
+                    className={`w-1/4 ${repeatCadence === "Yearly" ? "bg-stone-400" : "bg-stone-600"} rounded-r p-2`}>
+                    <Text className="text-center text-xl text-white">
+                      Yearly
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {repeatCadence === "Daily" && (
+                  <View className="my-2">
+                    <Text className="text-center text-2xl text-white">
+                      Repeats daily
+                    </Text>
+                    {/* Could also do a label and input asking Every: Day, 2 days, n days... */}
+                  </View>
+                )}
+
+                {repeatCadence === "Weekly" && (
+                  <View className="my-4 flex-row justify-center gap-3">
                     {scheduledDays.map((day) => (
                       <Pressable
                         key={day.label}
                         onPress={() => {
-                          setscheduledDays((prev) =>
+                          setScheduledDays((prev) =>
                             prev.map((prevDay) => {
                               if (prevDay.label === day.label) {
                                 return { ...day, active: !day.active };
@@ -267,15 +333,73 @@ export default function RoutineDetails() {
                         }}
                         className={`${day.active ? "bg-stone-300" : "bg-black"} flex h-14 w-14 items-center justify-center rounded-full`}>
                         <Text
-                          className={`${day.active ? "text-black" : "text-white"}`}>
+                          className={`${day.active ? "text-black" : "text-white"} text-xl`}>
                           {day.label}
                         </Text>
                       </Pressable>
                     ))}
                   </View>
-                </>
-              )}
-            </View>
+                )}
+
+                {repeatCadence === "Monthly" && (
+                  <>
+                    <View className="my-4 flex-row flex-wrap">
+                      {scheduledDays.map((day, index) => (
+                        <Pressable
+                          key={index}
+                          onPress={() => {
+                            setScheduledDays((prev) =>
+                              prev.map((prevDay) => {
+                                if (prevDay.label === day.label) {
+                                  return { ...day, active: !day.active };
+                                } else {
+                                  return prevDay;
+                                }
+                              }),
+                            );
+                          }}
+                          className={`${day.active ? "bg-stone-300" : "bg-black"} flex h-14 w-[14.28%] items-center justify-center border`}>
+                          <Text
+                            className={`${day.active ? "text-black" : "text-white"} text-xl`}>
+                            {`${day.label} ${index + 1 > 28 ? "*" : ""}`}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    <View className="mx-2 flex-row justify-center gap-2">
+                      <Text className="text-2xl font-bold text-white">*</Text>
+                      <Text className="text-white">
+                        Selected days that don't fall in a given month will fall
+                        on the last day of shorter months
+                      </Text>
+                    </View>
+                  </>
+                )}
+
+                {repeatCadence === "Yearly" && (
+                  <>
+                    <View className="my-4 flex-row items-center justify-between px-3 py-2">
+                      <Text className="text-xl font-semibold text-white">
+                        On Date (MM/DD)
+                      </Text>
+                      <RNDateTimePicker
+                        value={parseDateOrToday(
+                          scheduledDays[0]?.label ?? undefined,
+                        )}
+                        onChange={(_, d) => {
+                          if (d) {
+                            setScheduledDays(buildYearlyScheduledDays(d));
+                          }
+                        }}
+                        mode="date"
+                        themeVariant="dark"
+                        accentColor="white"
+                      />
+                    </View>
+                  </>
+                )}
+              </View>
+            )}
           </View>
         </ScrollView>
 

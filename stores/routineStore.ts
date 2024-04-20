@@ -1,8 +1,12 @@
 import { asc, eq } from "drizzle-orm";
 
 import { localDb } from "@/db";
-import { InferResultType } from "@/db/dbUtils";
-import { routines, scheduledDays } from "@/db/schema";
+import {
+  RoutineWithScheduledDays,
+  SelectScheduledDay,
+  routines,
+  scheduledDays,
+} from "@/db/schema";
 
 export const findRoutines = async () => {
   const result = await localDb.query.routines.findMany({
@@ -34,6 +38,7 @@ export const addRoutine = async (routine: RoutineWithScheduledDays) => {
         endDate: routine.endDate,
         repeat: routine.repeat,
         repeatEnds: routine.repeatEnds,
+        repeatCadence: routine.repeatCadence,
       })
       .returning();
 
@@ -69,6 +74,7 @@ export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
         endDate: routine.endDate,
         repeat: routine.repeat,
         repeatEnds: routine.repeatEnds,
+        repeatCadence: routine.repeatCadence,
       })
       .where(eq(routines.id, routine.id))
       .returning();
@@ -104,13 +110,3 @@ export const deleteRoutine = async (id: number) => {
   });
   return true;
 };
-
-export type SelectRoutine = typeof routines.$inferSelect;
-export type InsertRoutine = typeof routines.$inferInsert;
-export type SelectScheduledDay = typeof scheduledDays.$inferSelect;
-export type InsertScheduledDay = typeof scheduledDays.$inferInsert;
-
-export type RoutineWithScheduledDays = InferResultType<
-  "routines",
-  { scheduledDays: true }
->;
