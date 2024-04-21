@@ -6,6 +6,7 @@ import {
   endOfYear,
   isAfter,
   isBefore,
+  isEqual,
   isSunday,
   isWithinInterval,
   nextSunday,
@@ -274,19 +275,25 @@ const createMonthlyActivities = async (routine: RoutineWithScheduledDays) => {
         }
         return date;
       })
-      .filter((day) => isAfter(day, startDate) && isBefore(day, endDate))
+      .filter(
+        (day) =>
+          isEqual(day, startDate) ||
+          isEqual(day, endDate) ||
+          (isAfter(day, startDate) && isBefore(day, endDate)),
+      )
       .forEach((day) => datesToAdd.push(day));
   });
 
-  const activitiesToAdd = new Array(datesToAdd.length);
+  const activitiesToAdd: InsertActivity[] = [];
   datesToAdd.forEach((date) => {
-    activitiesToAdd.push({
+    const monthlyAct = {
       name: routine.name,
       description: routine.description,
       start: combineDateAndTime(date, routine.fromTime),
       end: combineDateAndTime(date, routine.toTime),
       routineId: routine.id,
-    });
+    };
+    activitiesToAdd.push(monthlyAct);
   });
 
   return await localDb.insert(activities).values(activitiesToAdd);
@@ -356,6 +363,6 @@ const createYearlyActivities = async (routine: RoutineWithScheduledDays) => {
 };
 
 const deleteActivitiesForRoutine = async (id: number) => {
-  await localDb.delete(activities).where(eq(activities.id, id));
+  await localDb.delete(activities).where(eq(activities.routineId, id));
   return true;
 };

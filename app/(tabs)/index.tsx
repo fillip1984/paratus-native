@@ -9,13 +9,12 @@ import TimelineCard from "../_components/TimelineCard";
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
 import { SelectActivity } from "@/db/schema";
-import { countActivities, findActivities } from "@/stores/activityStore";
+import { findActivities } from "@/stores/activityStore";
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filter, setFilter] = useState("All");
   const [activities, setActivities] = useState<SelectActivity[]>([]);
-  const [countActs, setCountActs] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -25,8 +24,6 @@ export default function Home() {
           filter,
         });
         setActivities(result);
-        const c = await countActivities();
-        setCountActs(c[0].count);
       }
 
       fetchData();
@@ -39,7 +36,6 @@ export default function Home() {
       <View className="h-screen">
         <Header
           activities={activities}
-          countActs={countActs}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
         />
@@ -52,17 +48,14 @@ export default function Home() {
 
 const Header = ({
   activities,
-  countActs,
   selectedDate,
   setSelectedDate,
 }: {
   activities: SelectActivity[];
-  countActs: number;
   selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
 }) => {
   const formatForDayLabel = () => {
-    console.log("rendering day label");
     if (isToday(selectedDate)) return "Today";
     if (isYesterday(selectedDate)) return "Yesterday";
     if (isTomorrow(selectedDate)) return "Tomorrow";
@@ -71,7 +64,8 @@ const Header = ({
   return (
     <View className="items-center">
       <Text className="text-2xl text-white">
-        {countActs} <Text className="text-white/50">activities for</Text>{" "}
+        {activities.length}{" "}
+        <Text className="text-white/50">activities for</Text>{" "}
         {formatForDayLabel()}
       </Text>
       <View className="flex-row items-center">
