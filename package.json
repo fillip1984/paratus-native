@@ -20,6 +20,7 @@
     "@react-native-community/datetimepicker": "7.6.1",
     "@react-navigation/native": "^6.0.2",
     "babel-plugin-inline-import": "^3.0.0",
+    "date-fns": "^3.6.0",
     "drizzle-orm": "^0.30.8",
     "expo": "~50.0.17",
     "expo-font": "~11.10.3",

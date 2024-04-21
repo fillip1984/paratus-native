@@ -17,12 +17,14 @@ export const findRoutines = async () => {
 };
 
 export const findRoutine = async (id: number) => {
-  return await localDb.query.routines.findFirst({
+  const result = await localDb.query.routines.findFirst({
     where: eq(routines.id, id),
     with: {
       scheduledDays: true,
     },
   });
+  console.log({ result });
+  return result;
 };
 
 export const createRoutine = async (routine: RoutineWithScheduledDays) => {
@@ -62,6 +64,7 @@ export const createRoutine = async (routine: RoutineWithScheduledDays) => {
 };
 
 export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
+  console.log({ routine });
   const result = await localDb.transaction(async (tx) => {
     const routineResult = await tx
       .update(routines)

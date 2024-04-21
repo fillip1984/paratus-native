@@ -51,6 +51,7 @@ export default function RoutineDetails() {
       const fetchData = async (id: number) => {
         const result = await findRoutine(id);
         if (result) {
+          console.log({ s: result.startDate, d: new Date(result.startDate) });
           setName(result.name);
           setDescription(result.description ?? "");
           setStartDate(new Date(result.startDate));
@@ -131,7 +132,7 @@ export default function RoutineDetails() {
         startDate: formatYYYY_MM_dd(startDate),
         fromTime: formatHH_mm(fromTime),
         toTime: formatHH_mm(toTime),
-        endDate: repeat ? formatYYYY_MM_dd(endDate) : null,
+        endDate: repeatEnds ? formatYYYY_MM_dd(endDate) : null,
         repeat,
         repeatEnds,
         repeatCadence,
@@ -148,7 +149,7 @@ export default function RoutineDetails() {
         startDate: formatYYYY_MM_dd(startDate),
         fromTime: formatHH_mm(fromTime),
         toTime: formatHH_mm(toTime),
-        endDate: repeat ? formatYYYY_MM_dd(endDate) : null,
+        endDate: repeatEnds ? formatYYYY_MM_dd(endDate) : null,
         repeat,
         repeatEnds,
         repeatCadence,
@@ -236,6 +237,7 @@ export default function RoutineDetails() {
                 <RNDateTimePicker
                   value={startDate}
                   onChange={(_, d) => {
+                    console.log({ d });
                     if (d) setStartDate(d);
                   }}
                   mode="date"

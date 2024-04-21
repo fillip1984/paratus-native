@@ -1,29 +1,38 @@
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, SafeAreaView, Text, View } from "react-native";
 
 import TimelineCard from "../_components/TimelineCard";
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
-import { NatureCard } from "@/app/_components/NatureCard";
-import { SelectActivity, activities } from "@/db/schema";
-import { findActivities } from "@/stores/activityStore";
+import { SelectActivity } from "@/db/schema";
+import { countActivities, findActivities } from "@/stores/activityStore";
 
 export default function Home() {
   const [activities, setActivities] = useState<SelectActivity[]>([]);
-  useEffect(() => {
-    async function fetchData() {
-      const result = await findActivities({ date: new Date(), filter: "All" });
-      setActivities(result);
-    }
+  const [countActs, setCountActs] = useState(0);
 
-    fetchData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchData() {
+        const result = await findActivities({
+          date: new Date(),
+          filter: "All",
+        });
+        setActivities(result);
+        const c = await countActivities();
+        setCountActs(c[0].count);
+      }
+
+      fetchData();
+    }, []),
+  );
 
   return (
     // TODO: still can't figure out how to style the safe area's text. Tried StatusBar from expo but can't get it to comply
     <SafeAreaView className="bg-black">
       <View className="h-screen">
-        <Header activities={activities} />
+        <Header activities={activities} countActs={countActs} />
         <TimelineFilter />
         <Timeline activities={activities} />
       </View>
@@ -31,10 +40,16 @@ export default function Home() {
   );
 }
 
-const Header = ({ activities }: { activities: SelectActivity[] }) => {
+const Header = ({
+  activities,
+  countActs,
+}: {
+  activities: SelectActivity[];
+  countActs: number;
+}) => {
   return (
     <Text className="text-center text-2xl text-white">
-      {activities.length} <Text className="text-white/50">activities for</Text>{" "}
+      {countActs} <Text className="text-white/50">activities for</Text>{" "}
       Wednesday
     </Text>
   );

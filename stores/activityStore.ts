@@ -1,4 +1,22 @@
-import { between, eq, gte } from "drizzle-orm";
+import {
+  addDays,
+  eachMonthOfInterval,
+  endOfDay,
+  endOfMonth,
+  endOfYear,
+  isAfter,
+  isBefore,
+  isSunday,
+  isWithinInterval,
+  nextSunday,
+  parse,
+  previousSunday,
+  set,
+  setDate,
+  startOfDay,
+  startOfMonth,
+} from "date-fns";
+import { between, count, eq } from "drizzle-orm";
 
 import { findRoutine } from "./routineStore";
 
@@ -9,6 +27,7 @@ import {
   activities,
 } from "@/db/schema";
 import {
+  HH_mm_aka24hr,
   combineDateAndTime,
   formatYYYY_MM_dd,
   yyyyMMddHyphenated,
@@ -21,16 +40,24 @@ export const findActivities = async ({
   date: Date;
   filter: string;
 }) => {
-  console.log({ s: startOfDay(date), e: endOfDay(date), date });
+  const start = startOfDay(date);
+  const end = endOfDay(date);
+  console.log({ start, end, date });
   const result = await localDb.query.activities.findMany({
-    where: between(activities.start, "2024-04-15T00:00", "2024-04-15T23:59"),
+    where: between(activities.start, start.toString(), end.toString()),
+    limit: 100,
   });
   result.forEach((r) => console.log({ start: r.start, end: r.end }));
   console.log({ length: result.length, sample: result[0] });
   return result;
 };
 
+export const countActivities = async () => {
+  return await localDb.select({ count: count() }).from(activities);
+};
+
 export const createActivitiesFromRoutine = async (routineId: number) => {
+  await localDb.delete(activities);
   await deleteActivitiesForRoutine(routineId);
   const routine = await findRoutine(routineId);
   if (!routine) {
@@ -108,36 +135,40 @@ const createDailyActivities = async (routine: RoutineWithScheduledDays) => {
     endDate = parse(routine.endDate, yyyyMMddHyphenated, new Date());
   } else {
     throw new Error(
-      "Unable to create weekly activities from routine, missing end date (wasn't marked as never ending). Routine: " +
+      "Unable to create daily activities from routine, missing end date (wasn't marked as never ending). Routine: " +
         routine.id,
     );
   }
 
+  const fromTimeAsDate = parse(routine.fromTime, HH_mm_aka24hr, new Date());
+  const toTimeAsDate = parse(routine.toTime, HH_mm_aka24hr, new Date());
   while (!isAfter(startDate, endDate)) {
-    console.log({ startDate, endDate });
-    const start = combineDateAndTime(
-      formatYYYY_MM_dd(startDate),
-      routine.fromTime,
-      //   userTimezone,
-    );
-    const end = combineDateAndTime(
-      formatYYYY_MM_dd(startDate),
-      routine.toTime,
-      //   userTimezone,
-    );
+    const start = set(startDate, {
+      hours: fromTimeAsDate.getHours(),
+      minutes: fromTimeAsDate.getMinutes(),
+    });
+    const end = set(startDate, {
+      hours: toTimeAsDate.getHours(),
+      minutes: toTimeAsDate.getMinutes(),
+    });
 
-    activitiesToAdd.push({
+    const act = {
       name: routine.name,
       description: routine.description,
-      start,
-      end,
+      start: start.toISOString(),
+      end: end.toISOString(),
       routineId: routine.id,
-    });
+    };
+    console.log({ act });
+    activitiesToAdd.push(act);
 
     startDate = addDays(startDate, 1);
   }
 
-  return await localDb.insert(activities).values(activitiesToAdd);
+  const result = await localDb.insert(activities).values(activitiesToAdd);
+  console.log(
+    `created ${result.changes} daily activities for routine: ${routine.name}`,
+  );
 };
 
 const createWeeklyActivities = async (routine: RoutineWithScheduledDays) => {

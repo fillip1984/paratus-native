@@ -24,7 +24,6 @@ export const parseYYYY_MM_dd = (d: string) => {
 
 export const formatYYYY_MM_dd = (d: Date) => {
   const r = format(d, yyyyMMddHyphenated);
-  console.log({ r });
   return r;
 };
 
@@ -54,7 +53,7 @@ export const combineDateAndTime = (
   //   yyyyMMddHyphenated + "T" + HH_mm_aka24hr,
   //   new Date(),
   // );
-  console.log({ datePart, timePart, combined });
+  // console.log({ datePart, timePart, combined });
   return combined;
   // const timePart = parse(time, HH_mm_aka24hr, new Date());
 
