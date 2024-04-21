@@ -240,7 +240,6 @@ export default function RoutineDetails() {
                 <RNDateTimePicker
                   value={startDate}
                   onChange={(_, d) => {
-                    console.log({ d });
                     if (d) setStartDate(startOfDay(d));
                   }}
                   mode="date"

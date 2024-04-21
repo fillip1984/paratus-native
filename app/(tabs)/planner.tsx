@@ -5,9 +5,7 @@ import { Pressable, SafeAreaView, Text, View } from "react-native";
 
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
-import { RoutineWithScheduledDays } from "@/db/schema";
-import { findRoutines } from "@/stores/routineStore";
-import { parseHH_mm } from "@/utils/date";
+import { RoutineWithScheduledDays, findRoutines } from "@/stores/routineStore";
 
 export default function PlannerScreen() {
   const [routines, setRoutines] = useState<RoutineWithScheduledDays[]>([]);

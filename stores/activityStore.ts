@@ -17,39 +17,66 @@ import {
   startOfDay,
   startOfMonth,
 } from "date-fns";
-import { between, count, eq } from "drizzle-orm";
+import { and, between, eq, not, or } from "drizzle-orm";
 
-import { findRoutine } from "./routineStore";
+import { RoutineWithScheduledDays, findRoutine } from "./routineStore";
 
 import { localDb } from "@/db";
-import {
-  InsertActivity,
-  RoutineWithScheduledDays,
-  activities,
-} from "@/db/schema";
+import { ActivityFilterType, InsertActivity, activities } from "@/db/schema";
 import { HH_mm_aka24hr, combineDateAndTime } from "@/utils/date";
+import { PromiseType, UnboxArray } from "@/utils/inference";
+
+export type ActivityWithPartialRoutine = UnboxArray<
+  PromiseType<ReturnType<typeof findActivities>>
+>;
 
 export const findActivities = async ({
   date,
   filter,
 }: {
   date: Date;
-  filter: string;
+  filter: ActivityFilterType;
 }) => {
   const start = startOfDay(date);
   const end = endOfDay(date);
-  console.log({ start, end, date });
+
   const result = await localDb.query.activities.findMany({
-    where: between(activities.start, start, end),
+    where: and(
+      filter !== "All"
+        ? and(
+            eq(activities.complete, filter === "Complete"),
+            eq(activities.skipped, filter === "Skipped"),
+          )
+        : undefined,
+      between(activities.start, start, end),
+    ),
     limit: 100,
+    with: {
+      routine: {
+        columns: {
+          name: true,
+          description: true,
+        },
+      },
+    },
   });
-  result.forEach((r) => console.log({ start: r.start, end: r.end }));
-  console.log({ length: result.length, sample: result[0] });
   return result;
 };
 
-export const countActivities = async () => {
-  return await localDb.select({ count: count() }).from(activities);
+export const completeActivity = async (id: number) => {
+  await localDb
+    .update(activities)
+    .set({ complete: true, skipped: false })
+    .where(eq(activities.id, id));
+  return true;
+};
+
+export const skipActivity = async (id: number) => {
+  await localDb
+    .update(activities)
+    .set({ skipped: true, complete: false })
+    .where(eq(activities.id, id));
+  return true;
 };
 
 export const createActivitiesFromRoutine = async (routineId: number) => {
@@ -97,8 +124,8 @@ const createOneTimeActivity = async (routine: RoutineWithScheduledDays) => {
   const end = combineDateAndTime(routine.endDate, routine.toTime);
 
   return await localDb.insert(activities).values({
-    name: routine.name,
-    description: routine.description,
+    // name: routine.name,
+    // description: routine.description,
     start,
     end,
     routineId: routine.id,
@@ -154,7 +181,6 @@ const createDailyActivities = async (routine: RoutineWithScheduledDays) => {
       end,
       routineId: routine.id,
     };
-    console.log({ act });
     activitiesToAdd.push(act);
 
     startDate = addDays(startDate, 1);
@@ -223,10 +249,9 @@ const createWeeklyActivities = async (routine: RoutineWithScheduledDays) => {
 
   const activitiesToAdd: InsertActivity[] = [];
   datesToAdd.forEach((day) => {
-    console.log({ day, fromTime: routine.fromTime });
     activitiesToAdd.push({
-      name: routine.name,
-      description: routine.description,
+      // name: routine.name,
+      // description: routine.description,
       start: combineDateAndTime(day, routine.fromTime),
       end: combineDateAndTime(day, routine.toTime),
       routineId: routine.id,
@@ -287,8 +312,8 @@ const createMonthlyActivities = async (routine: RoutineWithScheduledDays) => {
   const activitiesToAdd: InsertActivity[] = [];
   datesToAdd.forEach((date) => {
     const monthlyAct = {
-      name: routine.name,
-      description: routine.description,
+      // name: routine.name,
+      // description: routine.description,
       start: combineDateAndTime(date, routine.fromTime),
       end: combineDateAndTime(date, routine.toTime),
       routineId: routine.id,

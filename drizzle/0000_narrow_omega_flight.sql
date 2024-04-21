@@ -1,7 +1,5 @@
 CREATE TABLE `activity` (
 	`id` integer PRIMARY KEY NOT NULL,
-	`name` text NOT NULL,
-	`description` text,
 	`start` integer NOT NULL,
 	`end` integer NOT NULL,
 	`routine_id` integer NOT NULL,

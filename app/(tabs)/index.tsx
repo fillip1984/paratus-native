@@ -2,33 +2,69 @@ import { Feather } from "@expo/vector-icons";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { addDays, format, isToday, isTomorrow, isYesterday } from "date-fns";
 import { useFocusEffect } from "expo-router";
-import { Dispatch, SetStateAction, useCallback, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { Pressable, SafeAreaView, Text, View } from "react-native";
 
 import TimelineCard from "../_components/TimelineCard";
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
-import { SelectActivity } from "@/db/schema";
-import { findActivities } from "@/stores/activityStore";
+import { ActivityFilterType } from "@/db/schema";
+import {
+  ActivityWithPartialRoutine,
+  completeActivity,
+  findActivities,
+  skipActivity,
+} from "@/stores/activityStore";
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filter, setFilter] = useState("All");
-  const [activities, setActivities] = useState<SelectActivity[]>([]);
+  const [filter, setFilter] = useState<ActivityFilterType>("Available");
+  const [activities, setActivities] = useState<ActivityWithPartialRoutine[]>(
+    [],
+  );
+
+  const fetchActivities = async () => {
+    const result = await findActivities({
+      date: selectedDate,
+      filter,
+    });
+    setActivities(result);
+  };
 
   useFocusEffect(
     useCallback(() => {
-      async function fetchData() {
-        const result = await findActivities({
-          date: selectedDate,
-          filter,
-        });
-        setActivities(result);
-      }
-
-      fetchData();
+      fetchActivities();
     }, [selectedDate, filter]),
   );
+
+  useEffect(() => {
+    fetchActivities();
+  }, [selectedDate, filter]);
+
+  const handleCompleteOrSkip = async (
+    id: number,
+    action: "Complete" | "Skip",
+  ) => {
+    console.log("completing or skipping");
+    switch (action) {
+      case "Complete":
+        await completeActivity(id);
+        fetchActivities();
+        Promise.resolve();
+        break;
+      case "Skip":
+        await skipActivity(id);
+        fetchActivities();
+        Promise.resolve();
+        break;
+    }
+  };
 
   return (
     // TODO: still can't figure out how to style the safe area's text. Tried StatusBar from expo but can't get it to comply
@@ -39,8 +75,11 @@ export default function Home() {
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
         />
-        <TimelineFilter />
-        <Timeline activities={activities} />
+        <TimelineFilter filter={filter} setFilter={setFilter} />
+        <Timeline
+          activities={activities}
+          handleCompleteOrSkip={handleCompleteOrSkip}
+        />
       </View>
     </SafeAreaView>
   );
@@ -51,7 +90,7 @@ const Header = ({
   selectedDate,
   setSelectedDate,
 }: {
-  activities: SelectActivity[];
+  activities: ActivityWithPartialRoutine[];
   selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
 }) => {
@@ -89,36 +128,49 @@ const Header = ({
   );
 };
 
-const TimelineFilter = () => {
-  const [selectedFilter, setSelectedFilter] = useState("Available");
-
+const TimelineFilter = ({
+  filter,
+  setFilter,
+}: {
+  filter: ActivityFilterType;
+  setFilter: Dispatch<SetStateAction<ActivityFilterType>>;
+}) => {
   return (
     <Pressable className="flex flex-row px-2 py-4">
       <Pressable
-        onPress={() => setSelectedFilter("Available")}
-        className={`w-1/4 items-center rounded-l-lg p-4 ${selectedFilter === "Available" ? "bg-stone-200" : "bg-stone-500"}`}>
+        onPress={() => setFilter("Available")}
+        className={`w-1/4 items-center rounded-l-lg p-4 ${filter === "Available" ? "bg-stone-200" : "bg-stone-500"}`}>
         <Text>Available</Text>
       </Pressable>
       <Pressable
-        onPress={() => setSelectedFilter("Complete")}
-        className={`w-1/4 items-center p-4 ${selectedFilter === "Complete" ? "bg-stone-200" : "bg-stone-500"}`}>
+        onPress={() => setFilter("Complete")}
+        className={`w-1/4 items-center p-4 ${filter === "Complete" ? "bg-stone-200" : "bg-stone-500"}`}>
         <Text>Complete</Text>
       </Pressable>
       <Pressable
-        onPress={() => setSelectedFilter("Skipped")}
-        className={`w-1/4 items-center p-4 ${selectedFilter === "Skipped" ? "bg-stone-200" : "bg-stone-500"}`}>
+        onPress={() => setFilter("Skipped")}
+        className={`w-1/4 items-center p-4 ${filter === "Skipped" ? "bg-stone-200" : "bg-stone-500"}`}>
         <Text>Skipped</Text>
       </Pressable>
       <Pressable
-        onPress={() => setSelectedFilter("All")}
-        className={`w-1/4 items-center rounded-r-lg p-4 ${selectedFilter === "All" ? "bg-stone-200" : "bg-stone-500"}`}>
+        onPress={() => setFilter("All")}
+        className={`w-1/4 items-center rounded-r-lg p-4 ${filter === "All" ? "bg-stone-200" : "bg-stone-500"}`}>
         <Text>All</Text>
       </Pressable>
     </Pressable>
   );
 };
 
-const Timeline = ({ activities }: { activities: SelectActivity[] }) => {
+const Timeline = ({
+  activities,
+  handleCompleteOrSkip,
+}: {
+  activities: ActivityWithPartialRoutine[];
+  handleCompleteOrSkip: (
+    id: number,
+    action: "Complete" | "Skip",
+  ) => Promise<void>;
+}) => {
   return (
     <View>
       {activities.length === 0 && (
@@ -128,7 +180,11 @@ const Timeline = ({ activities }: { activities: SelectActivity[] }) => {
       )}
       <FlexScrollView>
         {activities.map((activity) => (
-          <TimelineCard key={activity.id} activity={activity} />
+          <TimelineCard
+            key={activity.id}
+            activity={activity}
+            handleCompleteOrSkip={handleCompleteOrSkip}
+          />
         ))}
         {/* <NatureCard />
       <NatureCard />

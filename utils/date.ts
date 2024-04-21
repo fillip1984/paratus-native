@@ -40,7 +40,7 @@ export const formatHH_mm = (d: Date) => {
 };
 
 /**
- * Combines a Date (yyyy-MM-dd) with time (HH:mm 24hr format) returning a new date
+ * Combines a Date with time (HH:mm 24hr format) returning a new date
  */
 export const combineDateAndTime = (datePart: Date, time: string) => {
   const timePart = parse(time, HH_mm_aka24hr, new Date());

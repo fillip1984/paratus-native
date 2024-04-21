@@ -1,12 +1,12 @@
 import { asc, eq } from "drizzle-orm";
 
 import { localDb } from "@/db";
-import {
-  RoutineWithScheduledDays,
-  SelectScheduledDay,
-  routines,
-  scheduledDays,
-} from "@/db/schema";
+import { SelectScheduledDay, routines, scheduledDays } from "@/db/schema";
+import { PromiseType, UnboxArray } from "@/utils/inference";
+
+export type RoutineWithScheduledDays = UnboxArray<
+  PromiseType<ReturnType<typeof findRoutines>>
+>;
 
 export const findRoutines = async () => {
   const result = await localDb.query.routines.findMany({
@@ -23,7 +23,7 @@ export const findRoutine = async (id: number) => {
       scheduledDays: true,
     },
   });
-  console.log({ result });
+
   return result;
 };
 
@@ -64,7 +64,6 @@ export const createRoutine = async (routine: RoutineWithScheduledDays) => {
 };
 
 export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
-  console.log({ routine });
   const result = await localDb.transaction(async (tx) => {
     const routineResult = await tx
       .update(routines)
