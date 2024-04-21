@@ -1,4 +1,4 @@
-import { format, parse } from "date-fns";
+import { format, parse, set } from "date-fns";
 
 export const yyyyMMddHyphenated = "yyyy-MM-dd";
 export const MMddSlash = "MM/dd";
@@ -43,18 +43,26 @@ export const formatHH_mm = (d: Date) => {
  * Combines a Date (yyyy-MM-dd) with time (HH:mm 24hr format) returning a new date (UTC timezone)
  */
 export const combineDateAndTime = (
-  datePart: string,
-  timePart: string,
+  datePart: Date,
+  time: string,
   // timezone: string,
 ) => {
-  const combined = datePart + "T" + timePart;
+  const timePart = parse(time, HH_mm_aka24hr, new Date());
+  const combined = set(datePart, {
+    hours: timePart.getHours(),
+    minutes: timePart.getMinutes(),
+    seconds: 0,
+  });
+  console.log({ datePart, timePart, combined });
+  return combined;
+  // const combined = datePart + "T" + timePart;
   // const result = parse(
   //   combined,
   //   yyyyMMddHyphenated + "T" + HH_mm_aka24hr,
   //   new Date(),
   // );
   // console.log({ datePart, timePart, combined });
-  return combined;
+  // return combined;
   // const timePart = parse(time, HH_mm_aka24hr, new Date());
 
   // const date = new Date(

@@ -11,10 +11,10 @@ export const routines = sqliteTable("routine", {
   id: integer("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  startDate: text("startDate").notNull(),
+  startDate: integer("startDate", { mode: "timestamp" }).notNull(),
   fromTime: text("fromTime").notNull(),
   toTime: text("toTime").notNull(),
-  endDate: text("endDate"),
+  endDate: integer("endDate", { mode: "timestamp" }),
   repeat: integer("repeat", { mode: "boolean" }).default(false),
   repeatEnds: integer("repeatEnds", { mode: "boolean" }).default(false),
   repeatCadence: text("repeatCadence", {
@@ -50,8 +50,8 @@ export const activities = sqliteTable("activity", {
   id: integer("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  start: text("start").notNull(),
-  end: text("end").notNull(),
+  start: integer("start", { mode: "timestamp" }).notNull(),
+  end: integer("end", { mode: "timestamp" }).notNull(),
   routineId: integer("routine_id")
     .references(() => routines.id, { onDelete: "cascade" })
     .notNull(),

@@ -26,12 +26,7 @@ import {
   RoutineWithScheduledDays,
   activities,
 } from "@/db/schema";
-import {
-  HH_mm_aka24hr,
-  combineDateAndTime,
-  formatYYYY_MM_dd,
-  yyyyMMddHyphenated,
-} from "@/utils/date";
+import { HH_mm_aka24hr, combineDateAndTime } from "@/utils/date";
 
 export const findActivities = async ({
   date,
@@ -44,7 +39,7 @@ export const findActivities = async ({
   const end = endOfDay(date);
   console.log({ start, end, date });
   const result = await localDb.query.activities.findMany({
-    where: between(activities.start, start.toString(), end.toString()),
+    where: between(activities.start, start, end),
     limit: 100,
   });
   result.forEach((r) => console.log({ start: r.start, end: r.end }));
@@ -57,7 +52,6 @@ export const countActivities = async () => {
 };
 
 export const createActivitiesFromRoutine = async (routineId: number) => {
-  await localDb.delete(activities);
   await deleteActivitiesForRoutine(routineId);
   const routine = await findRoutine(routineId);
   if (!routine) {
@@ -123,7 +117,7 @@ const createDailyActivities = async (routine: RoutineWithScheduledDays) => {
   //     );
   //   }
 
-  let startDate = parse(routine.startDate, yyyyMMddHyphenated, new Date());
+  let startDate = routine.startDate;
 
   let endDate: Date;
   // if "Never end" is selected we build out activities for the given year.
@@ -132,7 +126,7 @@ const createDailyActivities = async (routine: RoutineWithScheduledDays) => {
   if (!routine.repeatEnds) {
     endDate = endOfYear(startDate);
   } else if (routine.endDate) {
-    endDate = parse(routine.endDate, yyyyMMddHyphenated, new Date());
+    endDate = routine.endDate;
   } else {
     throw new Error(
       "Unable to create daily activities from routine, missing end date (wasn't marked as never ending). Routine: " +
@@ -155,8 +149,8 @@ const createDailyActivities = async (routine: RoutineWithScheduledDays) => {
     const act = {
       name: routine.name,
       description: routine.description,
-      start: start.toISOString(),
-      end: end.toISOString(),
+      start,
+      end,
       routineId: routine.id,
     };
     console.log({ act });
@@ -176,7 +170,7 @@ const createWeeklyActivities = async (routine: RoutineWithScheduledDays) => {
   let datesToAdd: Date[] = [];
 
   //   const userTimezone = await getUserTimezone(userId);
-  let startDate = parse(routine.startDate, yyyyMMddHyphenated, new Date());
+  let startDate = routine.startDate;
   let endDate: Date;
   // if "Never end" is selected we build out activities for the given year.
   // An activity will ask on New Years if we should build out the new year or
@@ -184,7 +178,7 @@ const createWeeklyActivities = async (routine: RoutineWithScheduledDays) => {
   if (!routine.repeatEnds) {
     endDate = endOfYear(startDate);
   } else if (routine.endDate) {
-    endDate = parse(routine.endDate, yyyyMMddHyphenated, new Date());
+    endDate = routine.endDate;
   } else {
     throw new Error(
       "Unable to create weekly activities from routine, missing end date (wasn't marked as never ending). Routine: " +
@@ -232,8 +226,8 @@ const createWeeklyActivities = async (routine: RoutineWithScheduledDays) => {
     activitiesToAdd.push({
       name: routine.name,
       description: routine.description,
-      start: combineDateAndTime(formatYYYY_MM_dd(day), routine.fromTime),
-      end: combineDateAndTime(formatYYYY_MM_dd(day), routine.toTime),
+      start: combineDateAndTime(day, routine.fromTime),
+      end: combineDateAndTime(day, routine.toTime),
       routineId: routine.id,
     });
   });
@@ -249,7 +243,7 @@ const createMonthlyActivities = async (routine: RoutineWithScheduledDays) => {
 
   //   const userTimezone = await getUserTimezone(userId);
 
-  const startDate = parse(routine.startDate, yyyyMMddHyphenated, new Date());
+  const startDate = routine.startDate;
   let endDate: Date;
   // if "Never end" is selected we build out activities for the given year.
   // An activity will ask on New Years if we should build out the new year or
@@ -257,7 +251,7 @@ const createMonthlyActivities = async (routine: RoutineWithScheduledDays) => {
   if (!routine.repeatEnds) {
     endDate = endOfYear(startDate);
   } else if (routine.endDate) {
-    endDate = parse(routine.endDate, yyyyMMddHyphenated, new Date());
+    endDate = routine.endDate;
   } else {
     throw new Error(
       "Unable to create weekly activities from routine, missing end date (wasn't marked as never ending). Routine: " +
@@ -289,8 +283,8 @@ const createMonthlyActivities = async (routine: RoutineWithScheduledDays) => {
     activitiesToAdd.push({
       name: routine.name,
       description: routine.description,
-      start: combineDateAndTime(formatYYYY_MM_dd(date), routine.fromTime),
-      end: combineDateAndTime(formatYYYY_MM_dd(date), routine.toTime),
+      start: combineDateAndTime(date, routine.fromTime),
+      end: combineDateAndTime(date, routine.toTime),
       routineId: routine.id,
     });
   });
@@ -327,7 +321,7 @@ const createYearlyActivities = async (routine: RoutineWithScheduledDays) => {
     );
   }
 
-  const startDate = parse(routine.startDate, yyyyMMddHyphenated, new Date());
+  const startDate = routine.startDate;
 
   let endDate: Date;
   // if "Never end" is selected we build out activities for the given year.
@@ -336,7 +330,7 @@ const createYearlyActivities = async (routine: RoutineWithScheduledDays) => {
   if (!routine.repeatEnds) {
     endDate = endOfYear(startDate);
   } else if (routine.endDate) {
-    endDate = parse(routine.endDate, yyyyMMddHyphenated, new Date());
+    endDate = routine.endDate;
   } else {
     throw new Error(
       "Unable to create weekly activities from routine, missing end date (wasn't marked as never ending). Routine: " +
@@ -349,8 +343,8 @@ const createYearlyActivities = async (routine: RoutineWithScheduledDays) => {
   const activity = {
     name: routine.name,
     description: routine.description,
-    start: combineDateAndTime(formatYYYY_MM_dd(scheduledDay), routine.fromTime),
-    end: combineDateAndTime(formatYYYY_MM_dd(scheduledDay), routine.toTime),
+    start: combineDateAndTime(scheduledDay, routine.fromTime),
+    end: combineDateAndTime(scheduledDay, routine.toTime),
     routineId: routine.id,
   };
 

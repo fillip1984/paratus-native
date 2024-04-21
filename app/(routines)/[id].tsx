@@ -1,4 +1,5 @@
 import RNDateTimePicker from "@react-native-community/datetimepicker";
+import { endOfDay, startOfDay } from "date-fns";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -36,8 +37,8 @@ export default function RoutineDetails() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState(startOfDay(new Date()));
+  const [endDate, setEndDate] = useState<Date>(endOfDay(new Date()));
   const [fromTime, setFromTime] = useState(new Date());
   const [toTime, setToTime] = useState(new Date());
   const [repeat, setRepeat] = useState(false);
@@ -51,7 +52,6 @@ export default function RoutineDetails() {
       const fetchData = async (id: number) => {
         const result = await findRoutine(id);
         if (result) {
-          console.log({ s: result.startDate, d: new Date(result.startDate) });
           setName(result.name);
           setDescription(result.description ?? "");
           setStartDate(new Date(result.startDate));
@@ -129,10 +129,11 @@ export default function RoutineDetails() {
         id,
         name,
         description,
-        startDate: formatYYYY_MM_dd(startDate),
+        // startDate: formatYYYY_MM_dd(startDate),
+        startDate,
         fromTime: formatHH_mm(fromTime),
         toTime: formatHH_mm(toTime),
-        endDate: repeatEnds ? formatYYYY_MM_dd(endDate) : null,
+        endDate: repeatEnds ? endDate : null,
         repeat,
         repeatEnds,
         repeatCadence,
@@ -146,10 +147,12 @@ export default function RoutineDetails() {
         id: -1,
         name,
         description,
-        startDate: formatYYYY_MM_dd(startDate),
+        // startDate: formatYYYY_MM_dd(startDate),
+        startDate,
         fromTime: formatHH_mm(fromTime),
         toTime: formatHH_mm(toTime),
-        endDate: repeatEnds ? formatYYYY_MM_dd(endDate) : null,
+        // endDate: repeatEnds ? formatYYYY_MM_dd(endDate) : null,
+        endDate: repeatEnds ? endDate : null,
         repeat,
         repeatEnds,
         repeatCadence,
@@ -238,7 +241,7 @@ export default function RoutineDetails() {
                   value={startDate}
                   onChange={(_, d) => {
                     console.log({ d });
-                    if (d) setStartDate(d);
+                    if (d) setStartDate(startOfDay(d));
                   }}
                   mode="date"
                   themeVariant="dark"
@@ -276,7 +279,7 @@ export default function RoutineDetails() {
                       <RNDateTimePicker
                         value={endDate ?? new Date()}
                         onChange={(_, d) => {
-                          if (d) setEndDate(d);
+                          if (d) setEndDate(endOfDay(d));
                         }}
                         mode="date"
                         themeVariant="dark"
