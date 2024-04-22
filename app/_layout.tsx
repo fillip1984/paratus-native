@@ -1,9 +1,13 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
+import { PermissionStatus } from "expo-modules-core";
+import * as Notifications from "expo-notifications";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+import { handleNotification, scheduleNotification } from "@/notifications";
 import "../global.css";
 
 export {
@@ -25,6 +29,14 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
+  const [notificationsPermitted, setNotificationsPermitted] =
+    useState<PermissionStatus>(PermissionStatus.UNDETERMINED);
+
+  const requestNotificationPermission = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    setNotificationsPermitted(status);
+  };
+
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
@@ -33,8 +45,16 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      requestNotificationPermission();
     }
   }, [loaded]);
+
+  useEffect(() => {
+    if (notificationsPermitted !== PermissionStatus.GRANTED) return;
+    const listener =
+      Notifications.addNotificationReceivedListener(handleNotification);
+    return () => listener.remove();
+  }, [notificationsPermitted]);
 
   if (!loaded) {
     return null;
