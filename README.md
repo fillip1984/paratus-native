@@ -8,17 +8,18 @@ You create routines using the Planner tab. Routines generate activities on the H
 
 ## TODO
 
-* [X] create sample routines import option
-* [ ] Add profile image in top right on home that launches user preferences modal
-* [ ] Add sunrise service to track sunlight
-* [ ] Automatically generate activities when routine is created or updated.
-* [ ] Generate interactions when completing activities
-  * [ ] Blood pressure interaction
-  * [ ] Run interaction
-  * [ ] Weigh in interaction
-  * [ ] Notes interaction
+- [X] create sample routines import option
 
-* [ ] Finish local push notifications
-* [ ] Add 'seeking' repeat mode where you are prompted if you did something.
-* [ ] Eventually an appropriate repeat schedule is generated.
-* [ ] Hook up backend to track outcomes
+- [ ] Add profile image in top right on home that launches user preferences modal
+- [ ] Add sunrise service to track sunlight
+- [ ] Automatically generate activities when routine is created or updated.
+- [ ] Generate interactions when completing activities
+  - [ ] Blood pressure interaction
+  - [ ] Run interaction
+  - [ ] Weigh in interaction
+  - [ ] Notes interaction
+
+- [ ] Finish local push notifications
+- [ ] Add 'seeking' repeat mode where you are prompted if you did something.
+- [ ] Eventually an appropriate repeat schedule is generated.
+- [ ] Hook up backend to track outcomes
