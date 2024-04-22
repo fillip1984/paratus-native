@@ -18,6 +18,6 @@ You create routines using the Planner tab. Routines generate activities on the H
   - [ ] Weigh in interaction
   - [ ] Notes interaction
 - [ ] Finish local push notifications
-- [ ] Add 'seeking' repeat mode where you are prompted if you did something.
-- [ ] Eventually an appropriate repeat schedule is generated.
+- [ ] Add 'seeking' repeat mode where you are prompted if you did something. Eventually an appropriate repeat schedule is generated.
 - [ ] Hook up backend to track outcomes
+- [ ] Add faceId login/security
