@@ -1,7 +1,12 @@
 import { asc, eq } from "drizzle-orm";
 
 import { localDb } from "@/db";
-import { SelectScheduledDay, routines, scheduledDays } from "@/db/schema";
+import {
+  SelectScheduledDay,
+  activities,
+  routines,
+  scheduledDays,
+} from "@/db/schema";
 import { PromiseType, UnboxArray } from "@/utils/inference";
 
 export type RoutineWithScheduledDays = UnboxArray<
@@ -106,8 +111,9 @@ export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
 
 export const deleteRoutine = async (id: number) => {
   await localDb.transaction(async (tx) => {
-    // TODO: having to delete scheduled days since cascade isn't working
+    // TODO: having to delete scheduled days and activities since cascade isn't working
     await tx.delete(scheduledDays).where(eq(scheduledDays.routineId, id));
+    await tx.delete(activities).where(eq(activities.routineId, id));
     await tx.delete(routines).where(eq(routines.id, id));
   });
   return true;

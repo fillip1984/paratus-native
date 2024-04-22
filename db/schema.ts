@@ -63,9 +63,9 @@ export const activitiesRelations = relations(activities, ({ one }) => ({
 }));
 
 export type SelectRoutine = typeof routines.$inferSelect;
-export type InsertRoutine = typeof routines.$inferInsert;
+// export type InsertRoutine = typeof routines.$inferInsert;
 export type SelectScheduledDay = typeof scheduledDays.$inferSelect;
-export type InsertScheduledDay = typeof scheduledDays.$inferInsert;
+// export type InsertScheduledDay = typeof scheduledDays.$inferInsert;
 // export type SelectActivity = typeof activities.$inferSelect;
 export type InsertActivity = typeof activities.$inferInsert;
 
