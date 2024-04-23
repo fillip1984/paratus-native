@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { addDays, format, isToday, isTomorrow, isYesterday } from "date-fns";
+import * as Location from "expo-location";
 import { Link, useFocusEffect } from "expo-router";
 import {
   Dispatch,
@@ -21,6 +22,7 @@ import {
   findActivities,
   skipActivity,
 } from "@/stores/activityStore";
+import fetchSunInfo from "@/stores/sunriseStore";
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -29,11 +31,64 @@ export default function Home() {
     [],
   );
 
+  // TODO: move up to layout and application init
+  const fetchSunriseInfo = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    let sunriseInfo = null;
+    if (status === "granted") {
+      try {
+        // console.log({ status });
+        const location = await Location.getLastKnownPositionAsync({});
+        if (location) {
+          sunriseInfo = await fetchSunInfo(
+            new Date(),
+            location?.coords.latitude,
+            location?.coords.longitude,
+          );
+          console.log({ sunriseInfo });
+          return sunriseInfo;
+        } else {
+          return undefined;
+        }
+      } catch (err) {
+        console.log(
+          "purposefully ignoring unresolved promises and errors while fetching sunrise info so the rest of activities are shown",
+          err,
+        );
+      }
+    }
+  };
+
   const fetchActivities = async () => {
+    const sunriseInfo = await fetchSunriseInfo();
+
     const result = await findActivities({
       date: selectedDate,
       filter,
     });
+    if (sunriseInfo) {
+      const sunriseActivity = {
+        routine: {
+          name: "Sunrise",
+          description: `Sunrise (first light) is at ${sunriseInfo.firstLight}`,
+        },
+        start: sunriseInfo.firstLight,
+        end: sunriseInfo.firstLight,
+        id: -998,
+      } as ActivityWithPartialRoutine;
+      result.unshift(sunriseActivity);
+
+      const sunsetActivity = {
+        routine: {
+          name: "Sunset",
+          description: `Sunset (last light) is at ${sunriseInfo.lastLight}`,
+        },
+        start: sunriseInfo.lastLight,
+        end: sunriseInfo.lastLight,
+        id: -999,
+      } as ActivityWithPartialRoutine;
+      result.push(sunsetActivity);
+    }
     setActivities(result);
   };
 
