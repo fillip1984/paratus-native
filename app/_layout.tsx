@@ -72,6 +72,10 @@ function RootLayoutNav() {
           name="(routines)/[id]"
           options={{ presentation: "modal" }}
         />
+        <Stack.Screen
+          name="(modals)/preferences"
+          options={{ presentation: "modal" }}
+        />
       </Stack>
       <StatusBar style="light" />
     </>

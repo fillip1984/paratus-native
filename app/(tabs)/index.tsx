@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { addDays, format, isToday, isTomorrow, isYesterday } from "date-fns";
-import { useFocusEffect } from "expo-router";
+import { Link, useFocusEffect } from "expo-router";
 import {
   Dispatch,
   SetStateAction,
@@ -101,7 +101,7 @@ const Header = ({
     return format(selectedDate, "EEEE");
   };
   return (
-    <View className="items-center">
+    <View className="relative items-center">
       <Text className="text-2xl text-white">
         {activities.length}{" "}
         <Text className="text-white/50">activities for</Text>{" "}
@@ -124,7 +124,18 @@ const Header = ({
           <Feather name="chevron-right" size={36} color="white" />
         </Pressable>
       </View>
+      <Avatar />
     </View>
+  );
+};
+
+const Avatar = () => {
+  return (
+    <Link href="/(modals)/preferences" asChild>
+      <Pressable className="absolute right-0 top-0 flex h-14 w-14 items-center justify-center rounded-full bg-stone-400">
+        <Text>PH</Text>
+      </Pressable>
+    </Link>
   );
 };
 
