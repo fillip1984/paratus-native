@@ -112,8 +112,8 @@ export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
 export const deleteRoutine = async (id: number) => {
   await localDb.transaction(async (tx) => {
     // TODO: having to delete scheduled days and activities since cascade isn't working
-    await tx.delete(scheduledDays).where(eq(scheduledDays.routineId, id));
     await tx.delete(activities).where(eq(activities.routineId, id));
+    await tx.delete(scheduledDays).where(eq(scheduledDays.routineId, id));
     await tx.delete(routines).where(eq(routines.id, id));
   });
   return true;
