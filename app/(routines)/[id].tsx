@@ -1,5 +1,5 @@
 import RNDateTimePicker from "@react-native-community/datetimepicker";
-import { endOfDay, startOfDay } from "date-fns";
+import { endOfDay, format, parse, startOfDay } from "date-fns";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -21,12 +21,7 @@ import {
   findRoutine,
   updateRoutine,
 } from "@/stores/routineStore";
-import {
-  formatHH_mm,
-  formatMM_dd,
-  parseDateOrToday,
-  parseHH_mm,
-} from "@/utils/date";
+import { HH_mm_aka24hr, MMddSlash } from "@/utils/date";
 
 export default function RoutineDetails() {
   const params = useLocalSearchParams();
@@ -54,8 +49,8 @@ export default function RoutineDetails() {
           setName(result.name);
           setDescription(result.description ?? "");
           setStartDate(new Date(result.startDate));
-          setFromTime(parseHH_mm(result.fromTime));
-          setToTime(parseHH_mm(result.toTime));
+          setFromTime(parse(result.fromTime, HH_mm_aka24hr, new Date()));
+          setToTime(parse(result.toTime, HH_mm_aka24hr, new Date()));
           setEndDate(result.endDate ? new Date(result.endDate) : new Date());
           setRepeat(result.repeat === true);
           setRepeatEnds(result.repeatEnds === true);
@@ -115,7 +110,7 @@ export default function RoutineDetails() {
     return [
       {
         id: -1,
-        label: formatMM_dd(d),
+        label: format(d, MMddSlash),
         active: true,
         routineId: -1,
       } as SelectScheduledDay,
@@ -128,10 +123,9 @@ export default function RoutineDetails() {
         id,
         name,
         description,
-        // startDate: formatYYYY_MM_dd(startDate),
         startDate,
-        fromTime: formatHH_mm(fromTime),
-        toTime: formatHH_mm(toTime),
+        fromTime: format(fromTime, HH_mm_aka24hr),
+        toTime: format(toTime, HH_mm_aka24hr),
         endDate: repeatEnds ? endDate : null,
         repeat,
         repeatEnds,
@@ -146,11 +140,9 @@ export default function RoutineDetails() {
         id: -1,
         name,
         description,
-        // startDate: formatYYYY_MM_dd(startDate),
         startDate,
-        fromTime: formatHH_mm(fromTime),
-        toTime: formatHH_mm(toTime),
-        // endDate: repeatEnds ? formatYYYY_MM_dd(endDate) : null,
+        fromTime: format(fromTime, HH_mm_aka24hr),
+        toTime: format(toTime, HH_mm_aka24hr),
         endDate: repeatEnds ? endDate : null,
         repeat,
         repeatEnds,
@@ -179,6 +171,24 @@ export default function RoutineDetails() {
       await deleteRoutine(id);
       router.dismiss();
     }
+  };
+
+  /**
+   * Parses Date in MM/dd format and if not given a valid string in that format returns today
+   *
+   */
+  const parseDateOrToday = (str: string) => {
+    // TODO: probably a better way to do this
+    if (!str) {
+      return new Date();
+    }
+
+    const d = parse(str, "MM/dd", new Date());
+    if (isNaN(d.getDate())) {
+      return new Date();
+    }
+
+    return d;
   };
 
   return (

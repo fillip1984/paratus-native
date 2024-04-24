@@ -17,14 +17,28 @@ import {
   startOfDay,
   startOfMonth,
 } from "date-fns";
-import { and, between, eq, not, or } from "drizzle-orm";
+import { and, between, eq } from "drizzle-orm";
 
 import { RoutineWithScheduledDays, findRoutine } from "./routineStore";
 
 import { localDb } from "@/db";
 import { ActivityFilterType, InsertActivity, activities } from "@/db/schema";
-import { HH_mm_aka24hr, combineDateAndTime } from "@/utils/date";
+import { HH_mm_aka24hr, h_mm_ampm } from "@/utils/date";
 import { PromiseType, UnboxArray } from "@/utils/inference";
+
+/**
+ * Combines a Date with time (HH:mm 24hr format) returning a new date
+ */
+export const combineDateAndTime = (datePart: Date, time: string) => {
+  const timePart = parse(time, h_mm_ampm, new Date());
+  const combined = set(datePart, {
+    hours: timePart.getHours(),
+    minutes: timePart.getMinutes(),
+    seconds: 0,
+  });
+
+  return combined;
+};
 
 export type ActivityWithPartialRoutine = UnboxArray<
   PromiseType<ReturnType<typeof findActivities>>

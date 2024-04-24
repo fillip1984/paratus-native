@@ -1,10 +1,11 @@
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
+import { format } from "date-fns";
 import { Link } from "expo-router";
-import { Animated, Text, View, Pressable } from "react-native";
+import { Animated, Pressable, Text, View } from "react-native";
 import { Swipeable } from "react-native-gesture-handler";
 
 import { ActivityWithPartialRoutine } from "@/stores/activityStore";
-import { formatHH_mm } from "@/utils/date";
+import { h_mm_ampm } from "@/utils/date";
 
 export default function TimelineCard({
   activity,
@@ -22,12 +23,11 @@ export default function TimelineCard({
   ) => {
     switch (direction) {
       case "right":
-        // await completeActivity(activity.id);
         await handleCompleteOrSkip(activity.id, "Complete");
         swipeable.close();
         break;
       case "left":
-        // currently doing nothing
+        // currently doing nothing, there are multiple options that the user can click on
         break;
     }
   };
@@ -50,7 +50,7 @@ export default function TimelineCard({
           <View className="flex flex-row items-center gap-1">
             <Feather name="clock" size={20} color="black" />
             <Text className="text-xl text-black">
-              {formatHH_mm(activity.start)}-{formatHH_mm(activity.end)}
+              {`${format(activity.start, h_mm_ampm)} - ${format(activity.end, h_mm_ampm)}`}
             </Text>
           </View>
         </View>

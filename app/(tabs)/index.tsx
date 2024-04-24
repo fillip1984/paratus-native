@@ -45,14 +45,14 @@ export default function Home() {
             location.coords.latitude,
             location.coords.longitude,
           );
-          console.log({ sunriseInfo });
+          // console.log({ sunriseInfo });
           return sunriseInfo;
         } else {
           return undefined;
         }
       } catch (err) {
-        console.log(
-          "purposefully ignoring unresolved promises and errors while fetching sunrise info so the rest of activities are shown",
+        console.warn(
+          "Purposefully ignoring unresolved promises and errors while fetching sunrise info so the rest of activities are shown",
           err,
         );
       }
@@ -69,23 +69,22 @@ export default function Home() {
     if (sunriseInfo) {
       const sunriseActivity = {
         routine: {
-          name: "Sunrise",
-          // description: `Sunrise (first light) is at ${sunriseInfo.firstLight}`,
-          description: JSON.stringify(sunriseInfo.rawResponse),
+          name: "Dawn",
+          description: `Dawn is at ${sunriseInfo.dawn}`,
         },
-        start: sunriseInfo.sunInfo.firstLight,
-        end: sunriseInfo.sunInfo.firstLight,
+        start: sunriseInfo.dawn,
+        end: sunriseInfo.dawn,
         id: -998,
       } as ActivityWithPartialRoutine;
       result.unshift(sunriseActivity);
 
       const sunsetActivity = {
         routine: {
-          name: "Sunset",
-          description: `Sunset (last light) is at ${sunriseInfo.sunInfo.lastLight}`,
+          name: "Dusk",
+          description: `Dusk is at ${sunriseInfo.dusk}`,
         },
-        start: sunriseInfo.sunInfo.lastLight,
-        end: sunriseInfo.sunInfo.lastLight,
+        start: sunriseInfo.dusk,
+        end: sunriseInfo.dusk,
         id: -999,
       } as ActivityWithPartialRoutine;
       result.push(sunsetActivity);

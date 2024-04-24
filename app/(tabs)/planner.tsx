@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
+import { format, parse } from "date-fns";
 import { Link, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, SafeAreaView, Text, View } from "react-native";
@@ -10,6 +11,7 @@ import {
   createRoutine,
   findRoutines,
 } from "@/stores/routineStore";
+import { HH_mm_aka24hr, h_mm_ampm } from "@/utils/date";
 
 export default function PlannerScreen() {
   const [routines, setRoutines] = useState<RoutineWithScheduledDays[]>([]);
@@ -187,7 +189,13 @@ const RoutineCard = ({ routine }: { routine: RoutineWithScheduledDays }) => {
           <View className="my-2 flex-row items-center gap-3">
             <Feather name="clock" size={20} color="black" />
             <Text>
-              {routine.fromTime} {routine.toTime ? `- ${routine.toTime}` : ""}
+              {`${format(
+                parse(routine.fromTime, HH_mm_aka24hr, new Date()),
+                h_mm_ampm,
+              )} - ${format(
+                parse(routine.toTime, HH_mm_aka24hr, new Date()),
+                h_mm_ampm,
+              )}`}
             </Text>
           </View>
           {routine.repeat && (

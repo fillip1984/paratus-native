@@ -15,7 +15,7 @@ export type RoutineWithScheduledDays = UnboxArray<
 
 export const findRoutines = async () => {
   const result = await localDb.query.routines.findMany({
-    orderBy: [asc(routines.name)],
+    orderBy: [asc(routines.fromTime)],
     with: { scheduledDays: true },
   });
   return result;
