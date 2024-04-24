@@ -27,7 +27,7 @@ export default function PlannerScreen() {
     }, []),
   );
 
-  const importSampleRoutines = () => {
+  const importSampleRoutines = async () => {
     const sampleRoutines = [
       {
         name: "Blood pressure reading",
@@ -145,7 +145,9 @@ export default function PlannerScreen() {
         ],
       },
     ] as RoutineWithScheduledDays[];
-    sampleRoutines.forEach((routine) => createRoutine(routine));
+    for (const routine of sampleRoutines) {
+      await createRoutine(routine);
+    }
     fetchData();
   };
 
