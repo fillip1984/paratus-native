@@ -1,1 +1,0 @@
-ALTER TABLE `activity` RENAME COLUMN `skip` TO `skipped`;

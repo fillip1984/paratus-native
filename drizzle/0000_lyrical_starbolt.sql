@@ -2,6 +2,8 @@ CREATE TABLE `activity` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`start` integer NOT NULL,
 	`end` integer NOT NULL,
+	`complete` integer DEFAULT false,
+	`skipped` integer DEFAULT false,
 	`routine_id` integer NOT NULL,
 	FOREIGN KEY (`routine_id`) REFERENCES `routine`(`id`) ON UPDATE no action ON DELETE cascade
 );

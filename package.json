@@ -9,7 +9,10 @@
     "web": "expo start --web",
     "db:generate": "drizzle-kit generate:sqlite",
     "test": "jest --watchAll",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build:production": "eas build --platform ios --profile production --local --non-interactive",
+    "build:simulator": "eas build --platform ios --profile development --local --non-interactive",
+    "install:simulator": "eas build:run --platform ios --profile development"
   },
   "jest": {
     "preset": "jest-expo"
@@ -17,7 +20,7 @@
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
     "@paralleldrive/cuid2": "^2.2.2",
-    "@react-native-community/datetimepicker": "7.6.1",
+    "@react-native-community/datetimepicker": "^7.7.0",
     "@react-navigation/native": "^6.0.2",
     "babel-plugin-inline-import": "^3.0.0",
     "date-fns": "^3.6.0",

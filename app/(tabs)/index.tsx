@@ -32,18 +32,18 @@ export default function Home() {
   );
 
   // TODO: move up to layout and application init
-  const fetchSunriseInfo = async () => {
+  const fetchSunriseInfo = async (date: Date) => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     let sunriseInfo = null;
     if (status === "granted") {
       try {
         // console.log({ status });
-        const location = await Location.getLastKnownPositionAsync({});
+        const location = await Location.getLastKnownPositionAsync();
         if (location) {
           sunriseInfo = await fetchSunInfo(
-            new Date(),
-            location?.coords.latitude,
-            location?.coords.longitude,
+            date,
+            location.coords.latitude,
+            location.coords.longitude,
           );
           console.log({ sunriseInfo });
           return sunriseInfo;
@@ -60,7 +60,7 @@ export default function Home() {
   };
 
   const fetchActivities = async () => {
-    const sunriseInfo = await fetchSunriseInfo();
+    const sunriseInfo = await fetchSunriseInfo(selectedDate);
 
     const result = await findActivities({
       date: selectedDate,
@@ -70,10 +70,11 @@ export default function Home() {
       const sunriseActivity = {
         routine: {
           name: "Sunrise",
-          description: `Sunrise (first light) is at ${sunriseInfo.firstLight}`,
+          // description: `Sunrise (first light) is at ${sunriseInfo.firstLight}`,
+          description: JSON.stringify(sunriseInfo.rawResponse),
         },
-        start: sunriseInfo.firstLight,
-        end: sunriseInfo.firstLight,
+        start: sunriseInfo.sunInfo.firstLight,
+        end: sunriseInfo.sunInfo.firstLight,
         id: -998,
       } as ActivityWithPartialRoutine;
       result.unshift(sunriseActivity);
@@ -81,10 +82,10 @@ export default function Home() {
       const sunsetActivity = {
         routine: {
           name: "Sunset",
-          description: `Sunset (last light) is at ${sunriseInfo.lastLight}`,
+          description: `Sunset (last light) is at ${sunriseInfo.sunInfo.lastLight}`,
         },
-        start: sunriseInfo.lastLight,
-        end: sunriseInfo.lastLight,
+        start: sunriseInfo.sunInfo.lastLight,
+        end: sunriseInfo.sunInfo.lastLight,
         id: -999,
       } as ActivityWithPartialRoutine;
       result.push(sunsetActivity);

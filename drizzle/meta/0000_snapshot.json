@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "13503d10-c428-4a12-a21b-ca1a054279f6",
+  "id": "8c2d55d6-8030-4e24-9b59-6287398086c6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "activity": {
@@ -27,6 +27,22 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        },
+        "complete": {
+          "name": "complete",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "skipped": {
+          "name": "skipped",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
         },
         "routine_id": {
           "name": "routine_id",

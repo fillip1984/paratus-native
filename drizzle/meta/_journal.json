@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1713727811448,
-      "tag": "0000_narrow_omega_flight",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1713730261906,
-      "tag": "0001_right_warhawk",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1713734832374,
-      "tag": "0002_tense_rhino",
+      "when": 1713916937668,
+      "tag": "0000_lyrical_starbolt",
       "breakpoints": true
     }
   ]

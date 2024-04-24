@@ -1,26 +1,32 @@
-import { Duration, format, intervalToDuration, parseISO } from "date-fns";
+import { Duration, format, intervalToDuration, parse } from "date-fns";
 
 import { yyyyMMddHyphenated } from "@/utils/date";
 
+/**
+ *  Raw response from api call
+ */
 export type SunInfoResponse = {
   results: {
+    date: string;
     sunrise: string;
     sunset: string;
+    first_light: string;
+    last_light: string;
+    dawn: string;
+    dusk: string;
     solar_noon: string;
-    day_length: number;
-    civil_twilight_begin: string;
-    civil_twilight_end: string;
-    nautical_twilight_begin: string;
-    nautical_twilight_end: string;
-    astronomical_twilight_begin: string;
-    astronomical_twilight_end: string;
+    golden_hour: string;
+    day_length: string;
+    timezone: string;
+    utc_offset: number;
   };
   status: string;
 };
 
+/**
+ * Tailored down response returned to app
+ */
 export type SunInfo = {
-  sunrise: Date;
-  sunset: Date;
   firstLight: Date;
   lastLight: Date;
   dayLength: Duration;
@@ -33,42 +39,40 @@ export default async function fetchSunInfo(
   longitude: number,
 ) {
   const formattedDate = format(date, yyyyMMddHyphenated);
-  const formatted = 0;
+  const apiUrl = `https://api.sunrisesunset.io/json?lat=${latitude}&lng=${longitude}&date=${formattedDate}`;
+  console.log({ apiUrl });
+  const response = await fetch(apiUrl);
 
-  // TODO: looks like the api has been refactored and updated but somehow backward compatible???
-  // provided by: https://sunrise-sunset.org/api
-  // changing formatted to 1 changes response values!
-  console.log({ date, latitude, longitude });
-  const sunInfoResponse = await fetch(
-    `https://api.sunrise-sunset.org/json?lat=${latitude}&lng=${longitude}&date=${formattedDate}&formatted=${formatted}`,
-  );
-
-  if (!sunInfoResponse.ok) {
+  if (!response.ok) {
     console.warn(
-      "Error occurred while fetching sunrise/sunset info, info is nice to have so not throwing an error",
+      "Error occurred while fetching sunrise/sunset info, info is nice to have only so not throwing an error",
     );
     return null;
   }
 
-  const sunInfoResponseData = (await sunInfoResponse.json()) as SunInfoResponse;
+  const rawResponse = (await response.json()) as SunInfoResponse;
+  console.log({ rawResponse });
+  const firstLight = parse(
+    rawResponse.results.first_light,
+    "h:mm:ss a",
+    new Date(),
+  );
+  const lastLight = parse(
+    rawResponse.results.last_light,
+    "h:mm:ss a",
+    new Date(),
+  );
 
-  const sunrise = parseISO(sunInfoResponseData.results.sunrise);
-  const firstLight = parseISO(sunInfoResponseData.results.civil_twilight_begin);
-  const sunset = parseISO(sunInfoResponseData.results.sunset);
-  const lastLight = parseISO(sunInfoResponseData.results.civil_twilight_end);
-  // See: https://stackoverflow.com/questions/48776140/format-a-duration-from-seconds-using-date-fns
   const dayLength = intervalToDuration({
-    start: 0,
-    end: sunInfoResponseData.results.day_length * 1000,
+    start: firstLight,
+    end: lastLight,
   });
 
   const sunInfo: SunInfo = {
-    sunrise,
-    sunset,
     firstLight,
     lastLight,
     dayLength,
   };
 
-  return sunInfo;
+  return { sunInfo, rawResponse };
 }
