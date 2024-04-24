@@ -51,6 +51,7 @@ export default function Preferences() {
     );
   };
 
+  // TODO: should we allow this to go to production?
   const deleteRoutines = async () => {
     const routines = await findRoutines();
     for (const routine of routines) {

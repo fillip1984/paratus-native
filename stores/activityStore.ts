@@ -4,6 +4,8 @@ import {
   endOfDay,
   endOfMonth,
   endOfYear,
+  getHours,
+  getMinutes,
   isAfter,
   isBefore,
   isEqual,
@@ -17,12 +19,17 @@ import {
   startOfDay,
   startOfMonth,
 } from "date-fns";
-import { and, between, eq } from "drizzle-orm";
+import { and, asc, between, eq } from "drizzle-orm";
 
 import { RoutineWithScheduledDays, findRoutine } from "./routineStore";
 
 import { localDb } from "@/db";
-import { ActivityFilterType, InsertActivity, activities } from "@/db/schema";
+import {
+  ActivityFilterType,
+  InsertActivity,
+  activities,
+  routines,
+} from "@/db/schema";
 import { HH_mm_aka24hr } from "@/utils/date";
 import { PromiseType, UnboxArray } from "@/utils/inference";
 
@@ -64,7 +71,6 @@ export const findActivities = async ({
         : undefined,
       between(activities.start, start, end),
     ),
-    limit: 100,
     with: {
       routine: {
         columns: {
@@ -73,6 +79,7 @@ export const findActivities = async ({
         },
       },
     },
+    orderBy: [asc(activities.start)],
   });
   return result;
 };
@@ -403,5 +410,45 @@ const createYearlyActivities = async (routine: RoutineWithScheduledDays) => {
 
 const deleteActivitiesForRoutine = async (id: number) => {
   await localDb.delete(activities).where(eq(activities.routineId, id));
+  return true;
+};
+
+export const updateActivitiesForRoutine = async (routineId: number) => {
+  const routine = await localDb.query.routines.findFirst({
+    where: eq(routines.id, routineId),
+  });
+  if (!routine) {
+    throw Error("Unable to update activities due to not finding routine");
+  }
+  const activitiesToUpdate = await localDb.query.activities.findMany({
+    where: and(
+      eq(activities.routineId, routineId),
+      eq(activities.complete, false),
+      eq(activities.skipped, false),
+    ),
+  });
+
+  const from = parse(routine.fromTime, HH_mm_aka24hr, new Date());
+  const to = parse(routine.toTime, HH_mm_aka24hr, new Date());
+  const updates = activitiesToUpdate.map((act) => {
+    return {
+      ...act,
+      start: set(act.start, {
+        hours: getHours(from),
+        minutes: getMinutes(from),
+      }),
+      end: set(act.end, { hours: getHours(to), minutes: getMinutes(to) }),
+    };
+  });
+  await localDb.transaction(async (tx) => {
+    for (const update of updates) {
+      tx.update(activities)
+        .set({
+          start: update.start,
+          end: update.end,
+        })
+        .where(eq(activities.id, update.id));
+    }
+  });
   return true;
 };

@@ -6,6 +6,7 @@ import { Pressable, SafeAreaView, Text, View } from "react-native";
 
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
+import { createActivitiesFromRoutine } from "@/stores/activityStore";
 import {
   RoutineWithScheduledDays,
   createRoutine,
@@ -146,7 +147,9 @@ export default function PlannerScreen() {
       },
     ] as RoutineWithScheduledDays[];
     for (const routine of sampleRoutines) {
-      await createRoutine(routine);
+      const newRoutine = await createRoutine(routine);
+      // TODO: don't like it but it works
+      await createActivitiesFromRoutine(newRoutine.routineResult[0].id);
     }
     fetchData();
   };

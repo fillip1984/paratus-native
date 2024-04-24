@@ -14,7 +14,10 @@ import {
 } from "react-native";
 
 import { RepeatCadenceType, SelectScheduledDay } from "@/db/schema";
-import { createActivitiesFromRoutine } from "@/stores/activityStore";
+import {
+  createActivitiesFromRoutine,
+  updateActivitiesForRoutine,
+} from "@/stores/activityStore";
 import {
   createRoutine,
   deleteRoutine,
@@ -133,6 +136,8 @@ export default function RoutineDetails() {
         scheduledDays: repeat ? scheduledDays : [],
       });
       if (result) {
+        // TODO: don't like it but it works
+        await createActivitiesFromRoutine(result.routineResult[0].id);
         router.dismiss();
       }
     } else {
@@ -150,6 +155,8 @@ export default function RoutineDetails() {
         scheduledDays: repeat ? scheduledDays : [],
       });
       if (result) {
+        // TODO: don't like it but it works
+        await updateActivitiesForRoutine(result.routineResult[0].id);
         router.dismiss();
       }
     }
