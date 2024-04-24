@@ -23,14 +23,14 @@ import { RoutineWithScheduledDays, findRoutine } from "./routineStore";
 
 import { localDb } from "@/db";
 import { ActivityFilterType, InsertActivity, activities } from "@/db/schema";
-import { HH_mm_aka24hr, h_mm_ampm } from "@/utils/date";
+import { HH_mm_aka24hr } from "@/utils/date";
 import { PromiseType, UnboxArray } from "@/utils/inference";
 
 /**
  * Combines a Date with time (HH:mm 24hr format) returning a new date
  */
 export const combineDateAndTime = (datePart: Date, time: string) => {
-  const timePart = parse(time, h_mm_ampm, new Date());
+  const timePart = parse(time, HH_mm_aka24hr, new Date());
   const combined = set(datePart, {
     hours: timePart.getHours(),
     minutes: timePart.getMinutes(),
