@@ -46,6 +46,7 @@ export const createRoutine = async (routine: RoutineWithScheduledDays) => {
         repeat: routine.repeat,
         repeatEnds: routine.repeatEnds,
         repeatCadence: routine.repeatCadence,
+        onComplete: routine.onComplete,
       })
       .returning();
 
@@ -82,6 +83,7 @@ export const updateRoutine = async (routine: RoutineWithScheduledDays) => {
         repeat: routine.repeat,
         repeatEnds: routine.repeatEnds,
         repeatCadence: routine.repeatCadence,
+        onComplete: routine.onComplete,
       })
       .where(eq(routines.id, routine.id))
       .returning();

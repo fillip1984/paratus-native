@@ -7,7 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 
-import { handleNotification, scheduleNotification } from "@/notifications";
+import { handleNotification } from "@/notifications";
 import "../global.css";
 
 export {
@@ -74,6 +74,22 @@ function RootLayoutNav() {
         />
         <Stack.Screen
           name="(modals)/preferences"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="(modals)/interactions/bloodPressureModal"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="(modals)/interactions/runModal"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="(modals)/interactions/weighInModal"
+          options={{ presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="(modals)/interactions/noteModal"
           options={{ presentation: "modal" }}
         />
       </Stack>

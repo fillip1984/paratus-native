@@ -13,7 +13,7 @@ export default function TimelineCard({
 }: {
   activity: ActivityWithPartialRoutine;
   handleCompleteOrSkip: (
-    id: number,
+    activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => Promise<void>;
 }) {
@@ -23,7 +23,7 @@ export default function TimelineCard({
   ) => {
     switch (direction) {
       case "right":
-        await handleCompleteOrSkip(activity.id, "Complete");
+        await handleCompleteOrSkip(activity, "Complete");
         swipeable.close();
         break;
       case "left":
@@ -34,7 +34,9 @@ export default function TimelineCard({
   return (
     <Swipeable
       renderLeftActions={(p, d) =>
-        LeftActions(p, d, activity, handleCompleteOrSkip)
+        LeftActions(p, d, activity, () =>
+          handleCompleteOrSkip(activity, "Complete"),
+        )
       }
       renderRightActions={RightActions}
       onSwipeableOpen={(direction, swipeable) =>

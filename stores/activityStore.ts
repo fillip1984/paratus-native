@@ -76,6 +76,7 @@ export const findActivities = async ({
         columns: {
           name: true,
           description: true,
+          onComplete: true,
         },
       },
     },

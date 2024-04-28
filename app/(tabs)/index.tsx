@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import { addDays, format, isToday, isTomorrow, isYesterday } from "date-fns";
 import * as Location from "expo-location";
-import { Link, useFocusEffect } from "expo-router";
+import { Link, router, useFocusEffect } from "expo-router";
 import {
   Dispatch,
   SetStateAction,
@@ -103,21 +103,46 @@ export default function Home() {
   }, [selectedDate, filter]);
 
   const handleCompleteOrSkip = async (
-    id: number,
+    activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => {
     console.log("completing or skipping");
     switch (action) {
       case "Complete":
-        await completeActivity(id);
+        handleComplete(activity);
         fetchActivities();
         Promise.resolve();
         break;
       case "Skip":
-        await skipActivity(id);
+        await skipActivity(activity.id);
         fetchActivities();
         Promise.resolve();
         break;
+    }
+  };
+
+  const handleComplete = async (activity: ActivityWithPartialRoutine) => {
+    console.log(
+      `Completing activity: ${activity.routine.name} without onComplete action: ${activity.routine.onComplete}`,
+    );
+    switch (activity.routine.onComplete) {
+      case "None":
+        await completeActivity(activity.id);
+        break;
+      case "BloodPressure":
+        router.push("/(modals)/interactions/bloodPressureModal");
+        break;
+      case "Note":
+        router.push("/(modals)/interactions/noteModal");
+        break;
+      case "Run":
+        router.push("/(modals)/interactions/runModal");
+        break;
+      case "WeighIn":
+        router.push("/(modals)/interactions/weighInModal");
+        break;
+      default:
+        throw Error(`Unconfigured outcome: ${activity.routine.onComplete}`);
     }
   };
 
@@ -233,7 +258,7 @@ const Timeline = ({
 }: {
   activities: ActivityWithPartialRoutine[];
   handleCompleteOrSkip: (
-    id: number,
+    activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => Promise<void>;
 }) => {

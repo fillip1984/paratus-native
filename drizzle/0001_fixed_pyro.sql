@@ -1,0 +1,1 @@
+ALTER TABLE routine ADD `onComplete` text DEFAULT 'None' NOT NULL;

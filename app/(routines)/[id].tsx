@@ -12,8 +12,13 @@ import {
   TextInput,
   View,
 } from "react-native";
+import RNPickerSelect from "react-native-picker-select";
 
-import { RepeatCadenceType, SelectScheduledDay } from "@/db/schema";
+import {
+  ActivityCompleteType,
+  RepeatCadenceType,
+  SelectScheduledDay,
+} from "@/db/schema";
 import {
   createActivitiesFromRoutine,
   updateActivitiesForRoutine,
@@ -34,6 +39,7 @@ export default function RoutineDetails() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [onComplete, setOnCompelte] = useState<ActivityCompleteType>("None");
   const [startDate, setStartDate] = useState(startOfDay(new Date()));
   const [endDate, setEndDate] = useState<Date>(endOfDay(new Date()));
   const [fromTime, setFromTime] = useState(new Date());
@@ -51,6 +57,7 @@ export default function RoutineDetails() {
         if (result) {
           setName(result.name);
           setDescription(result.description ?? "");
+          setOnCompelte(result.onComplete);
           setStartDate(new Date(result.startDate));
           setFromTime(parse(result.fromTime, HH_mm_aka24hr, new Date()));
           setToTime(parse(result.toTime, HH_mm_aka24hr, new Date()));
@@ -126,6 +133,7 @@ export default function RoutineDetails() {
         id,
         name,
         description,
+        onComplete,
         startDate,
         fromTime: format(fromTime, HH_mm_aka24hr),
         toTime: format(toTime, HH_mm_aka24hr),
@@ -145,6 +153,7 @@ export default function RoutineDetails() {
         id: -1,
         name,
         description,
+        onComplete,
         startDate,
         fromTime: format(fromTime, HH_mm_aka24hr),
         toTime: format(toTime, HH_mm_aka24hr),
@@ -198,6 +207,14 @@ export default function RoutineDetails() {
     return d;
   };
 
+  const activityCompleteTypes = [
+    { label: "None", value: "None" },
+    { label: "Blood Pressure", value: "BloodPressure" },
+    { label: "Take Notes", value: "Note" },
+    { label: "Record run outcome", value: "Run" },
+    { label: "Weigh in", value: "WeighIn" },
+  ];
+
   return (
     <SafeAreaView className="bg-stone-800">
       <View className="flex h-full gap-8 bg-stone-900 px-2">
@@ -219,6 +236,28 @@ export default function RoutineDetails() {
                 onChangeText={(e) => setDescription(e)}
                 placeholder="Description of routine"
               />
+            </View>
+
+            <View className="flex gap-2 rounded-lg bg-stone-800 p-1">
+              <View className="flex-row items-center justify-between px-3 py-2">
+                <Text className="text-xl font-semibold text-white">
+                  On Complete
+                </Text>
+                <View className="rounded-lg bg-white/10 px-3 py-3">
+                  <RNPickerSelect
+                    onValueChange={(value) => setOnCompelte(value)}
+                    value={onComplete}
+                    items={activityCompleteTypes}
+                    placeholder={{}}
+                    style={{
+                      inputIOS: {
+                        fontWeight: "bold",
+                        color: "white",
+                      },
+                    }}
+                  />
+                </View>
+              </View>
             </View>
 
             <View className="flex gap-2 rounded-lg bg-stone-800 p-1">

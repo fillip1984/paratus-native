@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const routines = sqliteTable("routine", {
   // TODO: try again in react-native 74, https://github.com/facebook/hermes/issues/948
@@ -19,7 +19,11 @@ export const routines = sqliteTable("routine", {
     enum: ["Daily", "Weekly", "Monthly", "Yearly"],
   }),
   // onSkip: skipInteractionType??
-  // onComplete: completeInteractionType
+  onComplete: text("onComplete", {
+    enum: ["BloodPressure", "None", "Note", "Run", "WeighIn"],
+  })
+    .default("None")
+    .notNull(),
 });
 
 export const routinesRelations = relations(routines, ({ many }) => ({
@@ -53,6 +57,15 @@ export const activities = sqliteTable("activity", {
   routineId: integer("routine_id")
     .references(() => routines.id, { onDelete: "cascade" })
     .notNull(),
+  bloodPressureReading: integer("bloodPressureReading_id").references(
+    () => bloodPressureReadings.id,
+    {
+      onDelete: "cascade",
+    },
+  ),
+  weighIn: integer("weighIn_id").references(() => weighIns.id, {
+    onDelete: "cascade",
+  }),
 });
 
 export const activitiesRelations = relations(activities, ({ one }) => ({
@@ -61,6 +74,26 @@ export const activitiesRelations = relations(activities, ({ one }) => ({
     references: [routines.id],
   }),
 }));
+
+export const weighIns = sqliteTable("weighIn", {
+  id: integer("id").primaryKey(),
+  date: integer("date", { mode: "timestamp" }).notNull(),
+  weight: real("weight").notNull(),
+  bodyFatPercentage: real("weight"),
+});
+
+export const weightGoal = sqliteTable("weightGoal", {
+  id: integer("id").primaryKey(),
+  weight: real("weight").notNull(),
+});
+
+export const bloodPressureReadings = sqliteTable("bloodPressureReading", {
+  id: integer("id").primaryKey(),
+  date: integer("date", { mode: "timestamp" }).notNull(),
+  systolic: integer("systolic").notNull(),
+  diastolic: integer("diastolic").notNull(),
+  pulse: integer("pulse"),
+});
 
 export type SelectRoutine = typeof routines.$inferSelect;
 // export type InsertRoutine = typeof routines.$inferInsert;
@@ -82,5 +115,12 @@ export type RepeatCadenceType =
   | "Monthly"
   | "Yearly"
   | null;
+
+export type ActivityCompleteType =
+  | "BloodPressure"
+  | "None"
+  | "Note"
+  | "Run"
+  | "WeighIn";
 
 export type ActivityFilterType = "Available" | "Complete" | "Skipped" | "All";

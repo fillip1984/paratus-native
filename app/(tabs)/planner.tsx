@@ -48,6 +48,7 @@ export default function PlannerScreen() {
           { label: "Fri", active: false },
           { label: "Sat", active: false },
         ],
+        onComplete: "BloodPressure",
       },
       {
         name: "Take out trash",
@@ -67,6 +68,7 @@ export default function PlannerScreen() {
           { label: "Fri", active: false },
           { label: "Sat", active: false },
         ],
+        onComplete: "None",
       },
       {
         name: "Mow the lawn",
@@ -86,6 +88,7 @@ export default function PlannerScreen() {
           { label: "Fri", active: true },
           { label: "Sat", active: false },
         ],
+        onComplete: "Note",
       },
       {
         name: "Weigh in",
@@ -105,6 +108,7 @@ export default function PlannerScreen() {
           { label: "Fri", active: false },
           { label: "Sat", active: false },
         ],
+        onComplete: "WeighIn",
       },
       {
         name: "Unload dishwasher",
@@ -124,6 +128,7 @@ export default function PlannerScreen() {
           { label: "Fri", active: true },
           { label: "Sat", active: false },
         ],
+        onComplete: "None",
       },
       {
         name: "Wash dishes",
@@ -144,6 +149,7 @@ export default function PlannerScreen() {
           { label: "Fri", active: true },
           { label: "Sat", active: false },
         ],
+        onComplete: "None",
       },
     ] as RoutineWithScheduledDays[];
     for (const routine of sampleRoutines) {
