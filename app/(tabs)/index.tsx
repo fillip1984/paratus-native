@@ -130,7 +130,11 @@ export default function Home() {
         await completeActivity(activity.id);
         break;
       case "BloodPressure":
-        router.push("/(modals)/interactions/bloodPressureModal");
+        router.push(`/(modals)/interactions/bloodPressure/${activity.id}`);
+        // router.push("");
+        // router.push(
+        //   `/(modals)/interactions/bloodPressureModal?activityId=${activity.id}`,
+        // );
         break;
       case "Note":
         router.push("/(modals)/interactions/noteModal");

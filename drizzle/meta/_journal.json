@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1713916937668,
-      "tag": "0000_lyrical_starbolt",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1714000376490,
-      "tag": "0001_fixed_pyro",
+      "when": 1714339284386,
+      "tag": "0000_easy_corsair",
       "breakpoints": true
     }
   ]

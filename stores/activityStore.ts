@@ -27,8 +27,12 @@ import { localDb } from "@/db";
 import {
   ActivityFilterType,
   InsertActivity,
+  InsertBloodPressureReading,
+  InsertWeighIn,
   activities,
+  bloodPressureReadings,
   routines,
+  weighIns,
 } from "@/db/schema";
 import { HH_mm_aka24hr } from "@/utils/date";
 import { PromiseType, UnboxArray } from "@/utils/inference";
@@ -85,11 +89,48 @@ export const findActivities = async ({
   return result;
 };
 
-export const completeActivity = async (id: number) => {
-  await localDb
-    .update(activities)
-    .set({ complete: true, skipped: false })
-    .where(eq(activities.id, id));
+export const findActivity = async (activityId: number) => {
+  return await localDb.query.activities.findFirst({
+    where: eq(activities.id, activityId),
+  });
+};
+
+export const completeActivity = async (
+  id: number,
+  bloodPressureReading?: InsertBloodPressureReading,
+  weighIn?: InsertWeighIn,
+) => {
+  await localDb.transaction(async (tx) => {
+    const activity = await tx
+      .update(activities)
+      .set({ complete: true, skipped: false })
+      .where(eq(activities.id, id))
+      .returning();
+    if (bloodPressureReading) {
+      await tx.insert(bloodPressureReadings).values({
+        date: bloodPressureReading.date,
+        systolic: bloodPressureReading.systolic,
+        diastolic: bloodPressureReading.diastolic,
+        pulse: bloodPressureReading.pulse,
+        activityId: activity[0].id,
+      });
+      // .onConflictDoUpdate({
+      //   target: [bloodPressureReadings.activityId],
+      //   set: {
+      //     systolic: bloodPressureReading.systolic,
+      //     diastolic: bloodPressureReading.diastolic,
+      //     pulse: bloodPressureReading.pulse,
+      //   },
+      // });
+    } else if (weighIn) {
+      tx.insert(weighIns).values({
+        date: weighIn.date,
+        weight: weighIn.weight,
+        bodyFatPercentage: weighIn.bodyFatPercentage,
+        activityId: activity[0].id,
+      });
+    }
+  });
   return true;
 };
 

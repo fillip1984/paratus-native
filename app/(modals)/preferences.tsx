@@ -3,6 +3,8 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, SafeAreaView, Text, View } from "react-native";
 
+import { localDb } from "@/db";
+import { bloodPressureReadings } from "@/db/schema";
 import { createActivitiesFromRoutine } from "@/stores/activityStore";
 import { deleteRoutine, findRoutines } from "@/stores/routineStore";
 
@@ -28,6 +30,7 @@ export default function Preferences() {
     console.log("rebuilding");
     // TODO: work on reactivity, the rebuilding flag isn't getting rendered. Would be nice to get a check mark once it happens that remains for a few seconds
     setRebuilding(true);
+    await deleteOutcomes();
     const routines = await findRoutines();
     for (const routine of routines) {
       await createActivitiesFromRoutine(routine.id);
@@ -57,7 +60,14 @@ export default function Preferences() {
     for (const routine of routines) {
       await deleteRoutine(routine.id);
     }
+    await deleteOutcomes();
     router.dismiss();
+  };
+
+  const deleteOutcomes = async () => {
+    console.log("deleting outcomes");
+    await localDb.delete(bloodPressureReadings);
+    console.warn("Still work in progress to clear out outcomes");
   };
 
   return (

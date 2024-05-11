@@ -57,15 +57,15 @@ export const activities = sqliteTable("activity", {
   routineId: integer("routine_id")
     .references(() => routines.id, { onDelete: "cascade" })
     .notNull(),
-  bloodPressureReading: integer("bloodPressureReading_id").references(
-    () => bloodPressureReadings.id,
-    {
-      onDelete: "cascade",
-    },
-  ),
-  weighIn: integer("weighIn_id").references(() => weighIns.id, {
-    onDelete: "cascade",
-  }),
+  // bloodPressureReading: integer("bloodPressureReading_id").references(
+  //   () => bloodPressureReadings.id,
+  //   {
+  //     onDelete: "cascade",
+  //   },
+  // ),
+  // weighIn: integer("weighIn_id").references(() => weighIns.id, {
+  //   onDelete: "cascade",
+  // }),
 });
 
 export const activitiesRelations = relations(activities, ({ one }) => ({
@@ -80,11 +80,24 @@ export const weighIns = sqliteTable("weighIn", {
   date: integer("date", { mode: "timestamp" }).notNull(),
   weight: real("weight").notNull(),
   bodyFatPercentage: real("weight"),
+  activityId: integer("activity_id")
+    .references(() => activities.id, { onDelete: "cascade" })
+    .notNull(),
 });
+
+export const weighInsRelations = relations(weighIns, ({ one }) => ({
+  activity: one(activities, {
+    fields: [weighIns.activityId],
+    references: [activities.id],
+  }),
+}));
 
 export const weightGoal = sqliteTable("weightGoal", {
   id: integer("id").primaryKey(),
   weight: real("weight").notNull(),
+  activity: integer("activity_id")
+    .references(() => activities.id, { onDelete: "cascade" })
+    .notNull(),
 });
 
 export const bloodPressureReadings = sqliteTable("bloodPressureReading", {
@@ -93,7 +106,20 @@ export const bloodPressureReadings = sqliteTable("bloodPressureReading", {
   systolic: integer("systolic").notNull(),
   diastolic: integer("diastolic").notNull(),
   pulse: integer("pulse"),
+  activityId: integer("activity_id")
+    .references(() => activities.id, { onDelete: "cascade" })
+    .notNull(),
 });
+
+export const bloodPressureReadingsRelations = relations(
+  bloodPressureReadings,
+  ({ one }) => ({
+    activity: one(activities, {
+      fields: [bloodPressureReadings.activityId],
+      references: [activities.id],
+    }),
+  }),
+);
 
 export type SelectRoutine = typeof routines.$inferSelect;
 // export type InsertRoutine = typeof routines.$inferInsert;
@@ -101,6 +127,12 @@ export type SelectScheduledDay = typeof scheduledDays.$inferSelect;
 // export type InsertScheduledDay = typeof scheduledDays.$inferInsert;
 // export type SelectActivity = typeof activities.$inferSelect;
 export type InsertActivity = typeof activities.$inferInsert;
+
+export type InsertBloodPressureReading =
+  typeof bloodPressureReadings.$inferInsert;
+export type SelectBloodPressureReading =
+  typeof bloodPressureReadings.$inferSelect;
+export type InsertWeighIn = typeof weighIns.$inferInsert;
 
 // export type RoutineWithScheduledDays = InferResultType<
 //   "routines",
