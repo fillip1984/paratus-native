@@ -29,10 +29,8 @@ export default function BloodPressureModal() {
   return (
     <SafeAreaView className="bg-stone-800">
       <View className="flex">
-        <ScrollView keyboardShouldPersistTaps="handled" className="">
-          {activityId && <EntryForm activityId={activityId} />}
-          <PreviousBloodPressureReadings />
-        </ScrollView>
+        {activityId && <EntryForm activityId={activityId} />}
+        <PreviousBloodPressureReadings />
       </View>
     </SafeAreaView>
   );
@@ -109,6 +107,7 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
   };
 
   return (
+    // <ScrollView keyboardShouldPersistTaps="handled"></ScrollView>
     <>
       <TopActionsBar onSubmit={onSubmit} isValid={isValid} />
       <View className="mt-2 items-center">
