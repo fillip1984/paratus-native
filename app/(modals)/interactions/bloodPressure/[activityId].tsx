@@ -13,8 +13,7 @@ import {
   View,
 } from "react-native";
 
-import { SelectBloodPressureReading } from "@/db/schema";
-import { completeActivity, findActivity } from "@/stores/activityStore";
+import { completeActivity } from "@/stores/activityStore";
 import {
   findBloodPressureReadingWithActivityId,
   findBloodPressureReadings,
@@ -26,22 +25,6 @@ export default function BloodPressureModal() {
   const activityId = params["activityId"]
     ? Number(params["activityId"] as string)
     : undefined;
-
-  const { status, data, error } = useQuery({
-    queryKey: ["activities", activityId],
-    queryFn: () => findActivity(Number(activityId)),
-    enabled: !!activityId,
-  });
-
-  const {
-    isLoading: bprLoading,
-    data: bpr,
-    isError: bprError,
-  } = useQuery({
-    queryKey: ["bloodPressureReadings"],
-    queryFn: () => findBloodPressureReadings(),
-    enabled: !!data,
-  });
 
   return (
     <SafeAreaView className="bg-stone-800">
@@ -83,26 +66,23 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
   const [diastolic, setDiastolic] = useState("");
   const [pulse, setPulse] = useState("");
 
+  const { data: bloodPressureReading } = useQuery({
+    queryKey: ["findBloodPressureReadingWithActivityId", activityId],
+    queryFn: () => findBloodPressureReadingWithActivityId(activityId),
+    enabled: !!activityId,
+  });
+
   // when editing, put back previous values
   useEffect(() => {
-    const fetchData = async () => {
-      if (activityId) {
-        const bloodPressureReading =
-          await findBloodPressureReadingWithActivityId(activityId);
-        if (bloodPressureReading) {
-          setDate(bloodPressureReading.date);
-          setSystolic(bloodPressureReading.systolic.toString());
-          setDiastolic(bloodPressureReading.diastolic.toString());
-          setPulse(
-            bloodPressureReading.pulse
-              ? bloodPressureReading.pulse.toString()
-              : "",
-          );
-        }
-      }
-    };
-    fetchData();
-  }, [activityId]);
+    if (bloodPressureReading) {
+      setDate(bloodPressureReading.date);
+      setSystolic(bloodPressureReading.systolic.toString());
+      setDiastolic(bloodPressureReading.diastolic.toString());
+      setPulse(
+        bloodPressureReading.pulse ? bloodPressureReading.pulse.toString() : "",
+      );
+    }
+  }, [bloodPressureReading]);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -119,14 +99,12 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
   });
 
   const onSubmit = () => {
-    console.log("submitting");
     if (isValid()) {
       mutation.mutate();
     }
   };
 
   const isValid = () => {
-    console.log({ valid: !!systolic && !!diastolic });
     return !!systolic && !!diastolic;
   };
 
@@ -196,22 +174,15 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
 };
 
 const PreviousBloodPressureReadings = () => {
-  const [previousBPs, setPreviousBPs] = useState<SelectBloodPressureReading[]>(
-    [],
-  );
-  useEffect(() => {
-    async function fetchPrevious() {
-      const results = await findBloodPressureReadings();
-      setPreviousBPs(results);
-    }
-
-    fetchPrevious();
-  }, []);
+  const { data: previousBPs } = useQuery({
+    queryKey: ["bloodPressureReadings"],
+    queryFn: () => findBloodPressureReadings(),
+  });
 
   return (
     <ScrollView>
       <View className="flex gap-2 pb-80">
-        {previousBPs.map((bloodPressureReading) => (
+        {previousBPs?.map((bloodPressureReading) => (
           <View
             key={bloodPressureReading.id}
             className="w-full items-center p-2">

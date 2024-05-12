@@ -16,5 +16,6 @@ export const findBloodPressureReadingWithActivityId = async (
   const result = await localDb.query.bloodPressureReadings.findFirst({
     where: eq(bloodPressureReadings.activityId, activityId),
   });
-  return result;
+  // tanstack doesn't like undefined so returning null
+  return result ?? null;
 };
