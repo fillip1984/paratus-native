@@ -28,7 +28,7 @@ export default function BloodPressureModal() {
 
   return (
     <SafeAreaView className="bg-stone-800">
-      <View className="flex">
+      <View className="flex h-screen">
         {activityId && <EntryForm activityId={activityId} />}
         <PreviousBloodPressureReadings />
       </View>
@@ -157,7 +157,8 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
         </View>
       </View>
 
-      <View className="mt-4 items-center">
+      {/* TODO: figure out a better way to push the results down */}
+      <View className="mb-28 mt-4 items-center">
         <Text className="text-white">Pulse</Text>
         <TextInput
           value={pulse}

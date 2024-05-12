@@ -191,10 +191,11 @@ const Header = ({
         <Text className="text-white/50">activities for</Text>{" "}
         {formatForDayLabel()}
       </Text>
-      <View className="flex-row items-center">
+      <View className="flex-row items-center justify-around">
         <Pressable onPress={() => setSelectedDate((prev) => addDays(prev, -1))}>
           <Feather name="chevron-left" size={36} color="white" />
         </Pressable>
+        {/* TODO: figure out how to push this center */}
         <RNDateTimePicker
           value={selectedDate}
           onChange={(_, d) => {
