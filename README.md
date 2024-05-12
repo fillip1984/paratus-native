@@ -9,9 +9,9 @@ You create routines using the Planner tab. Routines generate activities on the H
 ## TODO
 
 - [ ] Generate interactions when completing activities
-  - [ ] Blood pressure interaction
-  - [ ] Run interaction
+  - [X] Blood pressure interaction
   - [ ] Weigh in interaction
+  - [ ] Run interaction
   - [ ] Notes interaction
 - [ ] Add profile image in top right on home that launches user preferences modal
   - [ ] show outcomes inside of the preferences page?
@@ -20,9 +20,9 @@ You create routines using the Planner tab. Routines generate activities on the H
 - [X] Automatically generate activities when routine is created or updated.
 - [ ] Create custom nature event cards (dawn, dusk, seasonal changes, etc...)
 - [ ] Finish local push notifications
-- [ ] Add 'seeking' repeat mode where you are prompted if you did something. Eventually an appropriate repeat schedule is generated.
 - [ ] Hook up backend to track outcomes
 - [ ] Add faceId login/security
 - [X] create sample routines import option
 - [X] Add sunrise service to track sunlight
+- [ ] Add 'seeking' repeat mode where you are prompted if you did something. Eventually an appropriate repeat schedule is generated.
 - [ ] Resolve TODOs

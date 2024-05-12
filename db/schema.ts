@@ -81,15 +81,21 @@ export const activitiesRelations = relations(activities, ({ one }) => ({
   }),
 }));
 
-export const weighIns = sqliteTable("weighIn", {
-  id: integer("id").primaryKey(),
-  date: integer("date", { mode: "timestamp" }).notNull(),
-  weight: real("weight").notNull(),
-  bodyFatPercentage: real("weight"),
-  activityId: integer("activity_id")
-    .references(() => activities.id, { onDelete: "cascade" })
-    .notNull(),
-});
+export const weighIns = sqliteTable(
+  "weighIn",
+  {
+    id: integer("id").primaryKey(),
+    date: integer("date", { mode: "timestamp" }).notNull(),
+    weight: real("weight").notNull(),
+    bodyFatPercentage: real("bodyFatPercentage"),
+    activityId: integer("activity_id")
+      .references(() => activities.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (t) => ({
+    unq: unique().on(t.activityId),
+  }),
+);
 
 export const weighInsRelations = relations(weighIns, ({ one }) => ({
   activity: one(activities, {
@@ -119,7 +125,7 @@ export const bloodPressureReadings = sqliteTable(
       .notNull(),
   },
   (t) => ({
-    unq: unique("only_one").on(t.activityId),
+    unq: unique().on(t.activityId),
   }),
 );
 

@@ -119,7 +119,7 @@ function RootLayoutNav() {
           options={{ presentation: "modal" }}
         />
         <Stack.Screen
-          name="(modals)/interactions/weighInModal"
+          name="(modals)/interactions/weighIn/[activityId]"
           options={{ presentation: "modal" }}
         />
         <Stack.Screen

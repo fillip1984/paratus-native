@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "81d8b465-62c5-4d31-86e2-1253b941204a",
+  "id": "154ccdcd-169b-4d29-9e40-67dd36bd6e62",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "activity": {
@@ -117,7 +117,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "bloodPressureReading_activity_id_unique": {
+          "name": "bloodPressureReading_activity_id_unique",
+          "columns": [
+            "activity_id"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "bloodPressureReading_activity_id_activity_id_fk": {
           "name": "bloodPressureReading_activity_id_activity_id_fk",
@@ -298,6 +306,13 @@
           "name": "weight",
           "type": "real",
           "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "bodyFatPercentage": {
+          "name": "bodyFatPercentage",
+          "type": "real",
+          "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
@@ -309,7 +324,15 @@
           "autoincrement": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "weighIn_activity_id_unique": {
+          "name": "weighIn_activity_id_unique",
+          "columns": [
+            "activity_id"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "weighIn_activity_id_activity_id_fk": {
           "name": "weighIn_activity_id_activity_id_fk",

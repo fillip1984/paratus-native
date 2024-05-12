@@ -131,10 +131,6 @@ export default function Home() {
         break;
       case "BloodPressure":
         router.push(`/(modals)/interactions/bloodPressure/${activity.id}`);
-        // router.push("");
-        // router.push(
-        //   `/(modals)/interactions/bloodPressureModal?activityId=${activity.id}`,
-        // );
         break;
       case "Note":
         router.push("/(modals)/interactions/noteModal");
@@ -143,7 +139,7 @@ export default function Home() {
         router.push("/(modals)/interactions/runModal");
         break;
       case "WeighIn":
-        router.push("/(modals)/interactions/weighInModal");
+        router.push(`/(modals)/interactions/weighIn/${activity.id}`);
         break;
       default:
         throw Error(`Unconfigured outcome: ${activity.routine.onComplete}`);

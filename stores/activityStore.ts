@@ -125,12 +125,22 @@ export const completeActivity = async (
           },
         });
     } else if (weighIn) {
-      tx.insert(weighIns).values({
-        date: weighIn.date,
-        weight: weighIn.weight,
-        bodyFatPercentage: weighIn.bodyFatPercentage,
-        activityId: activity[0].id,
-      });
+      console.log({ weighIn });
+      await tx
+        .insert(weighIns)
+        .values({
+          date: weighIn.date,
+          weight: weighIn.weight,
+          bodyFatPercentage: weighIn.bodyFatPercentage,
+          activityId: activity[0].id,
+        })
+        .onConflictDoUpdate({
+          target: [weighIns.activityId],
+          set: {
+            weight: weighIn.weight,
+            bodyFatPercentage: weighIn.bodyFatPercentage,
+          },
+        });
     }
   });
   return true;

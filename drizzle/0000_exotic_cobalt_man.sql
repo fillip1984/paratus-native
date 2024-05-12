@@ -43,7 +43,8 @@ CREATE TABLE `scheduledDay` (
 CREATE TABLE `weighIn` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`date` integer NOT NULL,
-	`weight` real,
+	`weight` real NOT NULL,
+	`bodyFatPercentage` real,
 	`activity_id` integer NOT NULL,
 	FOREIGN KEY (`activity_id`) REFERENCES `activity`(`id`) ON UPDATE no action ON DELETE cascade
 );
@@ -54,3 +55,6 @@ CREATE TABLE `weightGoal` (
 	`activity_id` integer NOT NULL,
 	FOREIGN KEY (`activity_id`) REFERENCES `activity`(`id`) ON UPDATE no action ON DELETE cascade
 );
+--> statement-breakpoint
+CREATE UNIQUE INDEX `bloodPressureReading_activity_id_unique` ON `bloodPressureReading` (`activity_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `weighIn_activity_id_unique` ON `weighIn` (`activity_id`);
