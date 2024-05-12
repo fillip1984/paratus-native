@@ -107,21 +107,23 @@ export const completeActivity = async (
       .where(eq(activities.id, id))
       .returning();
     if (bloodPressureReading) {
-      await tx.insert(bloodPressureReadings).values({
-        date: bloodPressureReading.date,
-        systolic: bloodPressureReading.systolic,
-        diastolic: bloodPressureReading.diastolic,
-        pulse: bloodPressureReading.pulse,
-        activityId: activity[0].id,
-      });
-      // .onConflictDoUpdate({
-      //   target: [bloodPressureReadings.activityId],
-      //   set: {
-      //     systolic: bloodPressureReading.systolic,
-      //     diastolic: bloodPressureReading.diastolic,
-      //     pulse: bloodPressureReading.pulse,
-      //   },
-      // });
+      await tx
+        .insert(bloodPressureReadings)
+        .values({
+          date: bloodPressureReading.date,
+          systolic: bloodPressureReading.systolic,
+          diastolic: bloodPressureReading.diastolic,
+          pulse: bloodPressureReading.pulse,
+          activityId: activity[0].id,
+        })
+        .onConflictDoUpdate({
+          target: [bloodPressureReadings.activityId],
+          set: {
+            systolic: bloodPressureReading.systolic,
+            diastolic: bloodPressureReading.diastolic,
+            pulse: bloodPressureReading.pulse,
+          },
+        });
     } else if (weighIn) {
       tx.insert(weighIns).values({
         date: weighIn.date,

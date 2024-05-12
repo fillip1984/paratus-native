@@ -13,10 +13,7 @@ import {
   View,
 } from "react-native";
 
-import {
-  InsertBloodPressureReading,
-  SelectBloodPressureReading,
-} from "@/db/schema";
+import { SelectBloodPressureReading } from "@/db/schema";
 import { completeActivity, findActivity } from "@/stores/activityStore";
 import {
   findBloodPressureReadingWithActivityId,

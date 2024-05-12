@@ -1,5 +1,11 @@
 import { relations } from "drizzle-orm";
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  real,
+  sqliteTable,
+  text,
+  unique,
+} from "drizzle-orm/sqlite-core";
 
 export const routines = sqliteTable("routine", {
   // TODO: try again in react-native 74, https://github.com/facebook/hermes/issues/948
@@ -100,16 +106,22 @@ export const weightGoal = sqliteTable("weightGoal", {
     .notNull(),
 });
 
-export const bloodPressureReadings = sqliteTable("bloodPressureReading", {
-  id: integer("id").primaryKey(),
-  date: integer("date", { mode: "timestamp" }).notNull(),
-  systolic: integer("systolic").notNull(),
-  diastolic: integer("diastolic").notNull(),
-  pulse: integer("pulse"),
-  activityId: integer("activity_id")
-    .references(() => activities.id, { onDelete: "cascade" })
-    .notNull(),
-});
+export const bloodPressureReadings = sqliteTable(
+  "bloodPressureReading",
+  {
+    id: integer("id").primaryKey(),
+    date: integer("date", { mode: "timestamp" }).notNull(),
+    systolic: integer("systolic").notNull(),
+    diastolic: integer("diastolic").notNull(),
+    pulse: integer("pulse"),
+    activityId: integer("activity_id")
+      .references(() => activities.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (t) => ({
+    unq: unique("only_one").on(t.activityId),
+  }),
+);
 
 export const bloodPressureReadingsRelations = relations(
   bloodPressureReadings,
