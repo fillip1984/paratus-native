@@ -260,7 +260,7 @@ const Timeline = ({
   ) => Promise<void>;
 }) => {
   return (
-    <View>
+    <View className="flex-1">
       {activities.length === 0 && (
         <Text className="my-8 text-center text-3xl text-white">
           No activities
@@ -274,17 +274,6 @@ const Timeline = ({
             handleCompleteOrSkip={handleCompleteOrSkip}
           />
         ))}
-        {/* <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard />
-      <NatureCard /> */}
       </FlexScrollView>
     </View>
   );
