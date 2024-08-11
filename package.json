@@ -10,6 +10,7 @@
     "db:generate": "drizzle-kit generate:sqlite",
     "test": "jest --watchAll",
     "lint": "eslint .",
+    "build": "eas build -p ios -e production --local --non-interactive",
     "build:production": "eas build -p ios -e production --local",
     "build:simulator": "eas build -p ios -e development --local",
     "install:simulator": "eas build:run -p ios -e development"

@@ -12,6 +12,7 @@ import {
 } from "react";
 import { Pressable, SafeAreaView, Text, View } from "react-native";
 
+import { NatureCard } from "../_components/NatureCard";
 import TimelineCard from "../_components/TimelineCard";
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
@@ -23,6 +24,7 @@ import {
   skipActivity,
 } from "@/stores/activityStore";
 import fetchSunInfo from "@/stores/sunriseStore";
+import { h_mm_ampm } from "@/utils/date";
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -30,9 +32,12 @@ export default function Home() {
   const [activities, setActivities] = useState<ActivityWithPartialRoutine[]>(
     [],
   );
+  const [natureActivities, setNatureActivities] = useState<
+    ActivityWithPartialRoutine[]
+  >([]);
 
   // TODO: move up to layout and application init
-  const fetchSunriseInfo = async (date: Date) => {
+  const fetchSunriseInfo = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     let sunriseInfo = null;
     if (status === "granted") {
@@ -41,12 +46,34 @@ export default function Home() {
         const location = await Location.getLastKnownPositionAsync();
         if (location) {
           sunriseInfo = await fetchSunInfo(
-            date,
+            selectedDate,
             location.coords.latitude,
             location.coords.longitude,
           );
-          // console.log({ sunriseInfo });
-          return sunriseInfo;
+          console.log({ sunriseInfo });
+          if (sunriseInfo) {
+            const sunriseActivity = {
+              routine: {
+                name: "Dawn (first light)",
+                description: `Sunrise is at ${format(sunriseInfo.sunrise, h_mm_ampm)}. Daylight: ${sunriseInfo.dayLength.hours} hrs ${sunriseInfo.dayLength.minutes} mins`,
+              },
+              start: sunriseInfo.dawn,
+              end: sunriseInfo.dawn,
+              id: -998,
+            } as ActivityWithPartialRoutine;
+            setNatureActivities([sunriseActivity]);
+
+            const sunsetActivity = {
+              routine: {
+                name: "Dusk (last light)",
+                description: `Sunset is at ${format(sunriseInfo.sunset, h_mm_ampm)}. Daylight: ${sunriseInfo.dayLength.hours} hrs ${sunriseInfo.dayLength.minutes} mins`,
+              },
+              start: sunriseInfo.dusk,
+              end: sunriseInfo.dusk,
+              id: -999,
+            } as ActivityWithPartialRoutine;
+            setNatureActivities((prev) => [...prev, sunsetActivity]);
+          }
         } else {
           return undefined;
         }
@@ -60,41 +87,17 @@ export default function Home() {
   };
 
   const fetchActivities = async () => {
-    const sunriseInfo = await fetchSunriseInfo(selectedDate);
-
     const result = await findActivities({
       date: selectedDate,
       filter,
     });
-    if (sunriseInfo) {
-      const sunriseActivity = {
-        routine: {
-          name: "Dawn",
-          description: `Dawn is at ${sunriseInfo.dawn}`,
-        },
-        start: sunriseInfo.dawn,
-        end: sunriseInfo.dawn,
-        id: -998,
-      } as ActivityWithPartialRoutine;
-      result.unshift(sunriseActivity);
-
-      const sunsetActivity = {
-        routine: {
-          name: "Dusk",
-          description: `Dusk is at ${sunriseInfo.dusk}`,
-        },
-        start: sunriseInfo.dusk,
-        end: sunriseInfo.dusk,
-        id: -999,
-      } as ActivityWithPartialRoutine;
-      result.push(sunsetActivity);
-    }
     setActivities(result);
   };
 
   useFocusEffect(
     useCallback(() => {
       fetchActivities();
+      fetchSunriseInfo();
     }, [selectedDate, filter]),
   );
 
@@ -106,6 +109,7 @@ export default function Home() {
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => {
+    console.log({ msg: "Handling complete/skip", action });
     switch (action) {
       case "Complete":
         handleComplete(activity);
@@ -117,6 +121,15 @@ export default function Home() {
         fetchActivities();
         Promise.resolve();
         break;
+      default:
+        Promise.reject(
+          Error(
+            "Unexpected action, was expecting Complete or Skip only, received: " +
+              action +
+              " on activity: " +
+              activity.routine.name,
+          ),
+        );
     }
   };
 
@@ -154,6 +167,7 @@ export default function Home() {
         <TimelineFilter filter={filter} setFilter={setFilter} />
         <Timeline
           activities={activities}
+          natureActivities={natureActivities}
           handleCompleteOrSkip={handleCompleteOrSkip}
         />
       </View>
@@ -251,9 +265,11 @@ const TimelineFilter = ({
 
 const Timeline = ({
   activities,
+  natureActivities,
   handleCompleteOrSkip,
 }: {
   activities: ActivityWithPartialRoutine[];
+  natureActivities: ActivityWithPartialRoutine[];
   handleCompleteOrSkip: (
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
@@ -261,12 +277,10 @@ const Timeline = ({
 }) => {
   return (
     <View className="flex-1">
-      {activities.length === 0 && (
-        <Text className="my-8 text-center text-3xl text-white">
-          No activities
-        </Text>
-      )}
       <FlexScrollView>
+        {natureActivities.length > 0 && (
+          <NatureCard nature={natureActivities[0]} />
+        )}
         {activities.map((activity) => (
           <TimelineCard
             key={activity.id}
@@ -274,6 +288,14 @@ const Timeline = ({
             handleCompleteOrSkip={handleCompleteOrSkip}
           />
         ))}
+        {natureActivities.slice(1).map((nature) => (
+          <NatureCard key={nature.id} nature={nature} />
+        ))}
+        {activities.length === 0 && (
+          <Text className="my-8 text-center text-3xl text-white">
+            No activities
+          </Text>
+        )}
       </FlexScrollView>
     </View>
   );

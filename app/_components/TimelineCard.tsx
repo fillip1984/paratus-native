@@ -34,9 +34,7 @@ export default function TimelineCard({
   return (
     <Swipeable
       renderLeftActions={(p, d) =>
-        LeftActions(p, d, activity, () =>
-          handleCompleteOrSkip(activity, "Complete"),
-        )
+        LeftActions(p, d, activity, handleCompleteOrSkip)
       }
       renderRightActions={RightActions}
       onSwipeableOpen={(direction, swipeable) =>
@@ -47,7 +45,7 @@ export default function TimelineCard({
           <FontAwesome5 name="running" size={24} color="black" />
         </View>
         <View
-          className={`flex flex-1 justify-center ${activity.complete ? "bg-green-500" : "bg-yellow-200"} pl-2`}>
+          className={`flex flex-1 justify-center ${activity.complete ? "bg-green-600" : activity.skipped ? "bg-red-600" : "bg-stone-600"} pl-2`}>
           <Text className="text-xl text-black">{activity.routine.name}</Text>
           <View className="flex flex-row items-center gap-1">
             <Feather name="clock" size={20} color="black" />
@@ -66,7 +64,7 @@ const LeftActions = (
   dragX: Animated.AnimatedInterpolation<string | number>,
   activity: ActivityWithPartialRoutine,
   handleCompleteOrSkip: (
-    id: number,
+    activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => Promise<void>,
 ) => {
@@ -83,7 +81,11 @@ const LeftActions = (
             paddingHorizontal: 40,
             transform: [{ scale }],
           }}>
-          <Pressable onPress={() => handleCompleteOrSkip(activity.id, "Skip")}>
+          <Pressable
+            onPress={() => {
+              console.log("skipping");
+              handleCompleteOrSkip(activity, "Skip");
+            }}>
             <Text className="font-bold text-white">Skip</Text>
           </Pressable>
         </Animated.View>
