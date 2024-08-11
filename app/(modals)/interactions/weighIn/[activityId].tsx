@@ -106,6 +106,7 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
   };
 
   return (
+    // only easy way I found to have the keyboard dismiss on tap outside of fields. Would like for this item to not scroll
     <ScrollView keyboardShouldPersistTaps="handled" className="h-full">
       <TopActionsBar onSubmit={onSubmit} isValid={isValid} />
       <View className="mt-2 items-center">

@@ -14,13 +14,11 @@ import {
 } from "react-native";
 
 import { completeActivity } from "@/stores/activityStore";
-import {
-  findBloodPressureReadingWithActivityId,
-  findBloodPressureReadings,
-} from "@/stores/bloodPressureReadingStore";
+import { findBloodPressureReadings } from "@/stores/bloodPressureReadingStore";
+import { findNoteWithActivityId } from "@/stores/noteStore";
 import { yyyyMMddHyphenated } from "@/utils/date";
 
-export default function BloodPressureModal() {
+export default function NoteModal() {
   const params = useLocalSearchParams();
   const activityId = params["activityId"]
     ? Number(params["activityId"] as string)
@@ -60,35 +58,27 @@ const TopActionsBar = ({
 
 const EntryForm = ({ activityId }: { activityId: number }) => {
   const [date, setDate] = useState(new Date());
-  const [systolic, setSystolic] = useState("");
-  const [diastolic, setDiastolic] = useState("");
-  const [pulse, setPulse] = useState("");
+  const [body, setBody] = useState("");
 
-  const { data: bloodPressureReading } = useQuery({
-    queryKey: ["findBloodPressureReadingWithActivityId", activityId],
-    queryFn: () => findBloodPressureReadingWithActivityId(activityId),
+  const { data: note } = useQuery({
+    queryKey: ["findNoteWithActivityId", activityId],
+    queryFn: () => findNoteWithActivityId(activityId),
     enabled: !!activityId,
   });
 
   // when editing, put back previous values
   useEffect(() => {
-    if (bloodPressureReading) {
-      setDate(bloodPressureReading.date);
-      setSystolic(bloodPressureReading.systolic.toString());
-      setDiastolic(bloodPressureReading.diastolic.toString());
-      setPulse(
-        bloodPressureReading.pulse ? bloodPressureReading.pulse.toString() : "",
-      );
+    if (note) {
+      setDate(note.date);
+      setBody(note.body);
     }
-  }, [bloodPressureReading]);
+  }, [note]);
 
   const mutation = useMutation({
     mutationFn: () =>
-      completeActivity(activityId, {
+      completeActivity(activityId, undefined, undefined, {
         date,
-        systolic: Number(systolic),
-        diastolic: Number(diastolic),
-        pulse: pulse ? Number(pulse) : undefined,
+        body,
         activityId,
       }),
     onSuccess: () => {
@@ -103,7 +93,7 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
   };
 
   const isValid = () => {
-    return !!systolic && !!diastolic;
+    return !!body;
   };
 
   return (
@@ -122,52 +112,16 @@ const EntryForm = ({ activityId }: { activityId: number }) => {
         />
       </View>
 
-      {/* heart shape */}
-      <View className="relative -z-10">
-        <View className="absolute w-full">
-          <View className="flex items-center">
-            <SimpleLineIcons name="heart" size={370} color="black" />
-          </View>
-        </View>
-      </View>
-
       {/* form */}
-      <View className="mt-20 flex-row justify-around px-12">
-        <View className="items-center">
-          <Text className="text-white">Systolic</Text>
-          <TextInput
-            value={systolic}
-            onChangeText={(t) => setSystolic(t)}
-            keyboardType="number-pad"
-            placeholder="136"
-            className="mt-2 text-6xl text-white"
-          />
-          <Text className="text-white/30">mmHg</Text>
-        </View>
-        <View className="items-center">
-          <Text className="text-white">Diastolic</Text>
-          <TextInput
-            value={diastolic}
-            onChangeText={(t) => setDiastolic(t)}
-            keyboardType="number-pad"
-            placeholder="93"
-            className="mt-2 text-6xl text-white"
-          />
-          <Text className="text-white/30">mmHg</Text>
-        </View>
-      </View>
-
-      {/* TODO: figure out a better way to push the results down */}
-      <View className="mb-28 mt-4 items-center">
-        <Text className="text-white">Pulse</Text>
+      <View className="m-4 flex">
         <TextInput
-          value={pulse}
-          onChangeText={(t) => setPulse(t)}
-          keyboardType="number-pad"
-          placeholder="70"
-          className="mt-2 text-6xl text-white"
+          value={body}
+          multiline
+          numberOfLines={20}
+          onChangeText={(t) => setBody(t)}
+          placeholder="Take a note"
+          className="h-full max-h-56 rounded bg-white p-2"
         />
-        <Text className="text-white/30">beat/Min</Text>
       </View>
     </ScrollView>
   );

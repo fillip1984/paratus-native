@@ -28,9 +28,11 @@ import {
   ActivityFilterType,
   InsertActivity,
   InsertBloodPressureReading,
+  InsertNote,
   InsertWeighIn,
   activities,
   bloodPressureReadings,
+  notes,
   routines,
   weighIns,
 } from "@/db/schema";
@@ -99,6 +101,7 @@ export const completeActivity = async (
   id: number,
   bloodPressureReading?: InsertBloodPressureReading,
   weighIn?: InsertWeighIn,
+  note?: InsertNote,
 ) => {
   await localDb.transaction(async (tx) => {
     const activity = await tx
@@ -125,7 +128,6 @@ export const completeActivity = async (
           },
         });
     } else if (weighIn) {
-      console.log({ weighIn });
       await tx
         .insert(weighIns)
         .values({
@@ -139,6 +141,20 @@ export const completeActivity = async (
           set: {
             weight: weighIn.weight,
             bodyFatPercentage: weighIn.bodyFatPercentage,
+          },
+        });
+    } else if (note) {
+      await tx
+        .insert(notes)
+        .values({
+          date: note.date,
+          body: note.body,
+          activityId: activity[0].id,
+        })
+        .onConflictDoUpdate({
+          target: [notes.activityId],
+          set: {
+            body: note.body,
           },
         });
     }

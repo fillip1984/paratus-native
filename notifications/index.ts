@@ -23,7 +23,7 @@ export const scheduleNotification = async (seconds: number) => {
   };
   const scheduledId =
     await Notifications.scheduleNotificationAsync(schedulingOptions);
-  console.log(`Notification scheduled with id: ${scheduledId}`);
+  // console.log(`Notification scheduled with id: ${scheduledId}`);
   return scheduledId;
 };
 

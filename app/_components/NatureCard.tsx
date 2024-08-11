@@ -6,8 +6,7 @@ export function NatureCard() {
   return (
     <Swipeable
       renderLeftActions={LeftActions}
-      renderRightActions={RightActions}
-      onSwipeableOpen={(direction) => console.log(`open ${direction}`)}>
+      renderRightActions={RightActions}>
       <View className="flex h-24 w-full flex-row rounded bg-stone-300">
         <View className="flex items-center justify-center p-2">
           <Feather name="sunrise" size={36} color="black" />

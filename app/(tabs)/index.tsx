@@ -106,7 +106,6 @@ export default function Home() {
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => {
-    console.log("completing or skipping");
     switch (action) {
       case "Complete":
         handleComplete(activity);
@@ -122,9 +121,6 @@ export default function Home() {
   };
 
   const handleComplete = async (activity: ActivityWithPartialRoutine) => {
-    console.log(
-      `Completing activity: ${activity.routine.name} without onComplete action: ${activity.routine.onComplete}`,
-    );
     switch (activity.routine.onComplete) {
       case "None":
         await completeActivity(activity.id);
@@ -133,7 +129,7 @@ export default function Home() {
         router.push(`/(modals)/interactions/bloodPressure/${activity.id}`);
         break;
       case "Note":
-        router.push("/(modals)/interactions/noteModal");
+        router.push(`/(modals)/interactions/note/${activity.id}`);
         break;
       case "Run":
         router.push("/(modals)/interactions/runModal");

@@ -123,7 +123,7 @@ function RootLayoutNav() {
           options={{ presentation: "modal" }}
         />
         <Stack.Screen
-          name="(modals)/interactions/noteModal"
+          name="(modals)/interactions/note/[activityId]"
           options={{ presentation: "modal" }}
         />
       </Stack>

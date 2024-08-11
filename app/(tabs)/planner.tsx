@@ -151,6 +151,26 @@ export default function PlannerScreen() {
         ],
         onComplete: "None",
       },
+      {
+        name: "Go for run",
+        description: "Go for run",
+        fromTime: "20:00",
+        toTime: "20:25",
+        startDate: new Date(),
+        repeat: true,
+        repeatEnds: false,
+        repeatCadence: "Weekly",
+        scheduledDays: [
+          { label: "Sun", active: false },
+          { label: "Mon", active: true },
+          { label: "Tue", active: true },
+          { label: "Wed", active: true },
+          { label: "Thur", active: true },
+          { label: "Fri", active: true },
+          { label: "Sat", active: false },
+        ],
+        onComplete: "None",
+      },
     ] as RoutineWithScheduledDays[];
     for (const routine of sampleRoutines) {
       const newRoutine = await createRoutine(routine);

@@ -15,6 +15,5 @@ export const findWeighInsWithActivityId = async (activityId: number) => {
     where: eq(weighIns.activityId, activityId),
   });
   // tanstack doesn't like undefined so returning null
-  console.log({ result });
   return result ?? null;
 };

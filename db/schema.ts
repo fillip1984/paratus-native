@@ -139,6 +139,28 @@ export const bloodPressureReadingsRelations = relations(
   }),
 );
 
+export const notes = sqliteTable(
+  "note",
+  {
+    id: integer("id").primaryKey(),
+    date: integer("date", { mode: "timestamp" }).notNull(),
+    body: text("body").notNull(),
+    activityId: integer("activity_id")
+      .references(() => activities.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (t) => ({
+    unq: unique().on(t.activityId),
+  }),
+);
+
+export const noteRelations = relations(notes, ({ one }) => ({
+  activity: one(activities, {
+    fields: [notes.activityId],
+    references: [activities.id],
+  }),
+}));
+
 export type SelectRoutine = typeof routines.$inferSelect;
 // export type InsertRoutine = typeof routines.$inferInsert;
 export type SelectScheduledDay = typeof scheduledDays.$inferSelect;
@@ -151,6 +173,8 @@ export type InsertBloodPressureReading =
 export type SelectBloodPressureReading =
   typeof bloodPressureReadings.$inferSelect;
 export type InsertWeighIn = typeof weighIns.$inferInsert;
+
+export type InsertNote = typeof notes.$inferInsert;
 
 // export type RoutineWithScheduledDays = InferResultType<
 //   "routines",
