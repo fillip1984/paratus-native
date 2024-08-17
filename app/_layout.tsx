@@ -81,8 +81,16 @@ export default function RootLayout() {
     if (notificationsPermitted !== PermissionStatus.GRANTED) return;
     const listener =
       Notifications.addNotificationReceivedListener(handleNotification);
+    // scheduleTestPushNotification();
     return () => listener.remove();
   }, [notificationsPermitted]);
+
+  // const scheduleTestPushNotification = async () => {
+  //   await Notifications.scheduleNotificationAsync({
+  //     content: { title: "This is a test", body: "Did it work?" },
+  //     trigger: { seconds: 10 },
+  //   });
+  // };
 
   const [queryClient] = useState(() => new QueryClient());
 

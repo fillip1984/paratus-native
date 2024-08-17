@@ -1,7 +1,16 @@
 import { Feather } from "@expo/vector-icons";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
-import { addDays, format, isToday, isTomorrow, isYesterday } from "date-fns";
+import {
+  addDays,
+  endOfDay,
+  format,
+  isToday,
+  isTomorrow,
+  isYesterday,
+  startOfDay,
+} from "date-fns";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import { Link, router, useFocusEffect } from "expo-router";
 import {
   Dispatch,
@@ -17,6 +26,7 @@ import TimelineCard from "../_components/TimelineCard";
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
 import { ActivityFilterType } from "@/db/schema";
+import { scheduleNotificationForActivity } from "@/notifications";
 import {
   ActivityWithPartialRoutine,
   completeActivity,
@@ -50,7 +60,7 @@ export default function Home() {
             location.coords.latitude,
             location.coords.longitude,
           );
-          console.log({ sunriseInfo });
+          // console.log({ sunriseInfo });
           if (sunriseInfo) {
             const sunriseActivity = {
               routine: {
@@ -88,11 +98,34 @@ export default function Home() {
 
   const fetchActivities = async () => {
     const result = await findActivities({
-      date: selectedDate,
+      start: startOfDay(selectedDate),
+      end: endOfDay(selectedDate),
       filter,
     });
     setActivities(result);
   };
+
+  useEffect(() => {
+    const scheduleStuff = async () => {
+      if (activities?.length > 0) {
+        const notifications =
+          await Notifications.getAllScheduledNotificationsAsync();
+        activities.forEach((act) => {
+          const cancel = notifications.filter(
+            (n) => n.content.data.activityId === act.id,
+          );
+          cancel.forEach((c) =>
+            Notifications.cancelScheduledNotificationAsync(c.identifier),
+          );
+          if (act.routine) {
+            // console.log(`setting up notifications for ${act.routine.name}`);
+            scheduleNotificationForActivity(act);
+          }
+        });
+      }
+    };
+    scheduleStuff();
+  }, [activities]);
 
   useFocusEffect(
     useCallback(() => {
@@ -109,7 +142,6 @@ export default function Home() {
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => {
-    console.log({ msg: "Handling complete/skip", action });
     switch (action) {
       case "Complete":
         handleComplete(activity);

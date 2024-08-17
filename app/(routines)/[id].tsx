@@ -39,7 +39,7 @@ export default function RoutineDetails() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [onComplete, setOnCompelte] = useState<ActivityCompleteType>("None");
+  const [onComplete, setOnComplete] = useState<ActivityCompleteType>("None");
   const [startDate, setStartDate] = useState(startOfDay(new Date()));
   const [endDate, setEndDate] = useState<Date>(endOfDay(new Date()));
   const [fromTime, setFromTime] = useState(new Date());
@@ -57,7 +57,7 @@ export default function RoutineDetails() {
         if (result) {
           setName(result.name);
           setDescription(result.description ?? "");
-          setOnCompelte(result.onComplete);
+          setOnComplete(result.onComplete);
           setStartDate(new Date(result.startDate));
           setFromTime(parse(result.fromTime, HH_mm_aka24hr, new Date()));
           setToTime(parse(result.toTime, HH_mm_aka24hr, new Date()));
@@ -245,7 +245,7 @@ export default function RoutineDetails() {
                 </Text>
                 <View className="rounded-lg bg-white/10 px-3 py-3">
                   <RNPickerSelect
-                    onValueChange={(value) => setOnCompelte(value)}
+                    onValueChange={(value) => setOnComplete(value)}
                     value={onComplete}
                     items={activityCompleteTypes}
                     placeholder={{}}

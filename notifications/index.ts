@@ -1,5 +1,9 @@
+import { format } from "date-fns";
 import * as Notifications from "expo-notifications";
 import { Notification } from "expo-notifications";
+
+import { ActivityWithPartialRoutine } from "@/stores/activityStore";
+import { h_mm_ampm } from "@/utils/date";
 
 export interface notificationRequest {
   title: string;
@@ -8,22 +12,28 @@ export interface notificationRequest {
 }
 
 // TODO: add better input
-export const scheduleNotification = async (seconds: number) => {
+export const scheduleNotificationForActivity = async (
+  activity: ActivityWithPartialRoutine,
+) => {
+  console.log(
+    `scheduling activity: ${activity.routine.name} to notify at: ${format(activity.start, h_mm_ampm)}`,
+  );
   const schedulingOptions = {
     content: {
-      title: "This is a notification",
-      body: "This is the body",
+      title: activity.routine.name,
+      data: {
+        activityId: activity.id,
+      },
+      body: activity.routine.name,
       sound: true,
       priority: Notifications.AndroidNotificationPriority.HIGH,
       color: "blue",
     },
-    trigger: {
-      seconds,
-    },
+    trigger: activity.start,
   };
   const scheduledId =
     await Notifications.scheduleNotificationAsync(schedulingOptions);
-  // console.log(`Notification scheduled with id: ${scheduledId}`);
+  console.log(`Notification scheduled with id: ${scheduledId}`);
   return scheduledId;
 };
 

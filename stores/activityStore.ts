@@ -1,7 +1,6 @@
 import {
   addDays,
   eachMonthOfInterval,
-  endOfDay,
   endOfMonth,
   endOfYear,
   getHours,
@@ -16,7 +15,6 @@ import {
   previousSunday,
   set,
   setDate,
-  startOfDay,
   startOfMonth,
 } from "date-fns";
 import { and, asc, between, eq } from "drizzle-orm";
@@ -58,15 +56,14 @@ export type ActivityWithPartialRoutine = UnboxArray<
 >;
 
 export const findActivities = async ({
-  date,
+  start,
+  end,
   filter,
 }: {
-  date: Date;
+  start: Date;
+  end: Date;
   filter: ActivityFilterType;
 }) => {
-  const start = startOfDay(date);
-  const end = endOfDay(date);
-
   const result = await localDb.query.activities.findMany({
     where: and(
       filter !== "All"

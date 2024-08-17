@@ -8,12 +8,12 @@ import { h_mm_ampm } from "@/utils/date";
 export function NatureCard({ nature }: { nature: ActivityWithPartialRoutine }) {
   return (
     <View className="flex h-28 w-full flex-row rounded bg-stone-300">
-      <View className="flex items-center justify-center p-2">
+      <View className="flex w-16 items-center justify-center p-2">
         {nature.routine.name === "Dawn (first light)" && (
-          <Feather name="sunrise" size={36} color="black" />
+          <Feather name="sunrise" size={42} color="black" />
         )}
         {nature.routine.name === "Dusk (last light)" && (
-          <Feather name="sunset" size={36} color="black" />
+          <Feather name="sunset" size={42} color="black" />
         )}
       </View>
       <View className="flex flex-1 justify-center bg-yellow-200 pl-2">
