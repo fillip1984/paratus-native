@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   integer,
   real,
@@ -182,6 +182,13 @@ export type InsertNote = typeof notes.$inferInsert;
 // >;
 
 // export type ActivityWithRoutine = InferResultType;
+
+export const todos = sqliteTable("todo", {
+  id: integer("id").primaryKey(),
+  createdAt: text("createdAt").default(sql`(CURRENT_TIMESTAMP)`),
+  text: text("text").notNull(),
+  complete: integer("complete", { mode: "boolean" }).default(false),
+});
 
 export type RepeatCadenceType =
   | "Daily"
