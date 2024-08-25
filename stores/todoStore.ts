@@ -27,15 +27,15 @@ export const toggleTodo = async (id: number, complete: boolean) => {
   return await localDb.update(todos).set({ complete }).where(eq(todos.id, id));
 };
 
-export const updateTodo = async ({
-  todoUpdates,
-}: {
-  todoUpdates: TodosSelect;
-}) => {
-  return await localDb.update(todos).set({
-    text: todoUpdates.text,
-    complete: todoUpdates.complete,
-  });
+export const updateTodo = async (todoUpdates: TodosSelect) => {
+  console.log("updating the todo");
+  return await localDb
+    .update(todos)
+    .set({
+      text: todoUpdates.text,
+      complete: todoUpdates.complete,
+    })
+    .where(eq(todos.id, todoUpdates.id));
 };
 
 export const deleteTodo = async (id: number) => {

@@ -21,13 +21,10 @@ export const scheduleNotificationForActivity = async (
   const schedulingOptions = {
     content: {
       title: activity.routine.name,
+      body: activity.routine.name,
       data: {
         activityId: activity.id,
       },
-      body: activity.routine.name,
-      sound: true,
-      priority: Notifications.AndroidNotificationPriority.HIGH,
-      color: "blue",
     },
     trigger: activity.start,
   };

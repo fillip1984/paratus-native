@@ -1,15 +1,25 @@
-import Checkbox from "expo-checkbox";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, SafeAreaView, Text, View } from "react-native";
+import {
+  Animated,
+  Pressable,
+  SafeAreaView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
+import { useDebounceCallback } from "usehooks-ts";
 
 import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
 import {
   createTodos,
+  deleteTodo,
   findTodos,
   TodosSelect,
   toggleTodo,
+  updateTodo,
 } from "@/stores/todoStore";
 
 export default function Todos() {
@@ -27,7 +37,6 @@ export default function Todos() {
   );
 
   const handleTodoToggle = (todoUpdate: TodosSelect) => {
-    toggleTodo(todoUpdate.id, !todoUpdate.complete);
     setTodos(
       todos.map((todo) =>
         todo.id === todoUpdate.id
@@ -35,6 +44,34 @@ export default function Todos() {
           : todo,
       ),
     );
+    toggleTodo(todoUpdate.id, !todoUpdate.complete);
+  };
+
+  const debouncedUpdate = useDebounceCallback(updateTodo, 800);
+  const handleTodoUpdate = (todoUpdate: TodosSelect) => {
+    setTodos(
+      todos.map((todo) =>
+        todo.id === todoUpdate.id ? { ...todo, text: todoUpdate.text } : todo,
+      ),
+    );
+    debouncedUpdate(todoUpdate);
+  };
+
+  const handleSwipe = async (
+    direction: "left" | "right",
+    swipeable: Swipeable,
+    todo: TodosSelect,
+  ) => {
+    switch (direction) {
+      case "right":
+        await deleteTodo(todo.id);
+        setTodos((prev) => prev.filter((t) => t.id !== todo.id));
+        swipeable.close();
+        break;
+      case "left":
+        // currently doing nothing
+        break;
+    }
   };
 
   const importSampleTodos = async () => {
@@ -76,6 +113,8 @@ export default function Todos() {
               key={todo.id}
               todo={todo}
               handleTodoToggle={handleTodoToggle}
+              handleSwipe={handleSwipe}
+              handleTodoUpdate={handleTodoUpdate}
             />
           ))}
         </FlexScrollView>
@@ -87,83 +126,63 @@ export default function Todos() {
 const TodoCard = ({
   todo,
   handleTodoToggle,
+  handleSwipe,
+  handleTodoUpdate,
 }: {
   todo: TodosSelect;
   handleTodoToggle: (todo: TodosSelect) => void;
+  handleSwipe: (
+    direction: "left" | "right",
+    swipeable: Swipeable,
+    todo: TodosSelect,
+  ) => void;
+  handleTodoUpdate: (todo: TodosSelect) => void;
 }) => {
   return (
-    <Pressable className="flex min-h-[100px] w-full rounded bg-stone-400 p-2">
-      <Checkbox
-        value={todo.complete ?? false}
-        onValueChange={() => handleTodoToggle(todo)}
-      />
-      <Text>Todo</Text>
-    </Pressable>
-    // <Link href={`/(routines)/${routine.id}`} asChild>
-    //   <Pressable className="flex w-full rounded bg-stone-400 p-2">
-    //     <Text className="text-2xl">{routine.name}</Text>
-    //     <Text className="text-small">{routine.description}</Text>
-    //     <View className="my-2">
-    //       <View className="my-2 flex-row items-center gap-3">
-    //         <Feather name="clock" size={20} color="black" />
-    //         <Text>
-    //           {`${format(
-    //             parse(routine.fromTime, HH_mm_aka24hr, new Date()),
-    //             h_mm_ampm,
-    //           )} - ${format(
-    //             parse(routine.toTime, HH_mm_aka24hr, new Date()),
-    //             h_mm_ampm,
-    //           )}`}
-    //         </Text>
-    //       </View>
-    //       {routine.repeat && (
-    //         <View className="my-2 flex flex-row items-center gap-2">
-    //           <Feather name="repeat" size={24} color="black" />
-    //           {routine.repeatCadence === "Daily" && <Text>Daily</Text>}
-    //           {routine.repeatCadence === "Weekly" && (
-    //             <View className="flex flex-row gap-2">
-    //               <Text>Weekly:</Text>
-    //               {routine.scheduledDays.map((scheduledDay) => (
-    //                 <Text
-    //                   key={scheduledDay.label}
-    //                   className={`text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
-    //                   {scheduledDay.label}
-    //                 </Text>
-    //               ))}
-    //             </View>
-    //           )}
-    //           {routine.repeatCadence === "Monthly" && (
-    //             <View className="mr-10 flex-row flex-wrap">
-    //               <Text>Monthly: </Text>
-    //               {routine.scheduledDays.map((scheduledDay) => (
-    //                 <Text
-    //                   key={scheduledDay.label}
-    //                   className={`text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
-    //                   {scheduledDay.label},{" "}
-    //                 </Text>
-    //               ))}
-    //             </View>
-    //           )}
-    //           {routine.repeatCadence === "Yearly" && (
-    //             <View className="mr-10 flex-row flex-wrap">
-    //               <Text>Yearly: </Text>
-    //               {routine.scheduledDays.map((scheduledDay) => (
-    //                 <Text
-    //                   key={scheduledDay.label}
-    //                   className={`text-black ${scheduledDay.active ? "" : "opacity-20"}`}>
-    //                   {scheduledDay.label}
-    //                 </Text>
-    //               ))}
-    //             </View>
-    //           )}
-    //         </View>
-    //       )}
-    //       <View className="my-2 flex-row items-center gap-2">
-    //         <Ionicons name="trophy-outline" size={24} color="black" />
-    //         <Text>1/10</Text>
-    //       </View>
-    //     </View>
-    //   </Pressable>
-    // </Link>
+    <Swipeable
+      renderRightActions={RightActions}
+      onSwipeableOpen={(direction, swipeable) =>
+        handleSwipe(direction, swipeable, todo)
+      }>
+      <View className="flex min-h-[100px] w-full flex-row items-center gap-4 rounded bg-stone-400 p-2">
+        <Pressable
+          onPress={() => handleTodoToggle(todo)}
+          className={`h-8 w-8 rounded-full border ${todo.complete ? "bg-green-600" : ""}`}
+        />
+        <View className="flex w-0 flex-grow">
+          <TextInput
+            value={todo.text}
+            onChangeText={(t) => handleTodoUpdate({ ...todo, text: t })}
+            multiline
+            numberOfLines={4}
+            className="font-semibold"
+          />
+        </View>
+      </View>
+    </Swipeable>
+  );
+};
+
+const RightActions = (
+  progress: Animated.AnimatedInterpolation<string | number>,
+  dragX: Animated.AnimatedInterpolation<string | number>,
+) => {
+  const scale = dragX.interpolate({
+    inputRange: [-100, 0],
+    outputRange: [0.7, 0],
+  });
+
+  return (
+    <View className="flex-1 items-end justify-center bg-red-600">
+      <Animated.Text
+        style={{
+          color: "white",
+          paddingHorizontal: 65,
+          fontWeight: "600",
+          transform: [{ scale }],
+        }}>
+        Delete
+      </Animated.Text>
+    </View>
   );
 };
