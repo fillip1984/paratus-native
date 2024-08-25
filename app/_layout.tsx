@@ -61,29 +61,16 @@ export default function RootLayout() {
 
     if (authenticated.success) {
       console.log({ authenticated: authenticated.success });
-      // this.setState({
-      //   authenticationError: "None",
-      // });
       setAuthenticated(true);
     } else {
       console.log(authenticated.error);
       setAuthenticated(false);
-      // this.setState({
-      //   authenticationError: authenticated.error,
-      // });
     }
-
-    // this.setState({
-    //   authenticated: authenticated.success,
-    // });
   };
-  // useEffect(() => {
-  //   async function setupBiometrics() {
-  //     const hasHardware = await LocalAuthentication.hasHardwareAsync();
-  //     const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-  //   }
-  //   setupBiometrics();
-  // }, []);
+
+  useEffect(() => {
+    authenticate();
+  }, []);
 
   // check if we have permission to send notifications
   const [notificationsPermitted, setNotificationsPermitted] =
