@@ -27,7 +27,6 @@ export default function Preferences() {
   };
 
   const rebuildActivities = async () => {
-    console.log("rebuilding");
     // TODO: work on reactivity, the rebuilding flag isn't getting rendered. Would be nice to get a check mark once it happens that remains for a few seconds
     setRebuilding(true);
     await deleteOutcomes();
@@ -65,7 +64,6 @@ export default function Preferences() {
   };
 
   const deleteOutcomes = async () => {
-    console.log("deleting outcomes");
     await localDb.delete(bloodPressureReadings);
     console.warn("Still work in progress to clear out outcomes");
   };

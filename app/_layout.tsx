@@ -52,18 +52,16 @@ export default function RootLayout() {
   // setup biometric/login
   const [authenticated, setAuthenticated] = useState(true);
   const authenticate = async () => {
-    const hasHardware = await LocalAuthentication.hasHardwareAsync();
-    const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-    console.log({ hasHardware, isEnrolled });
+    // const hasHardware = await LocalAuthentication.hasHardwareAsync();
+    // const isEnrolled = await LocalAuthentication.isEnrolledAsync();
     const authenticated = await LocalAuthentication.authenticateAsync({
       promptMessage: "Authenticate with Face ID",
     });
 
     if (authenticated.success) {
-      console.log({ authenticated: authenticated.success });
       setAuthenticated(true);
     } else {
-      console.log(authenticated.error);
+      console.warn(authenticated.error);
       setAuthenticated(false);
     }
   };

@@ -83,7 +83,6 @@ const LeftActions = (
           }}>
           <Pressable
             onPress={() => {
-              console.log("skipping");
               handleCompleteOrSkip(activity, "Skip");
             }}>
             <Text className="font-bold text-white">Skip</Text>

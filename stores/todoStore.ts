@@ -7,7 +7,8 @@ import { PromiseType, UnboxArray } from "@/utils/inference";
 export type TodosSelect = UnboxArray<PromiseType<ReturnType<typeof findTodos>>>;
 
 export const createTodos = async ({ text }: { text: string }) => {
-  return localDb.insert(todos).values({ text });
+  const [todo] = await localDb.insert(todos).values({ text }).returning();
+  return todo;
 };
 
 export const findTodos = async () => {

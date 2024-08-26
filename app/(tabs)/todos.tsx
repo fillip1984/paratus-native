@@ -1,4 +1,5 @@
 import Entypo from "@expo/vector-icons/Entypo";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { Link, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -36,6 +37,11 @@ export default function Todos() {
       fetchData();
     }, []),
   );
+
+  const addTodo = async (text: string) => {
+    const todo = (await createTodos({ text })) as TodosSelect;
+    setTodos((prev) => [...prev, todo]);
+  };
 
   const handleTodoToggle = (todoUpdate: TodosSelect) => {
     setTodos(
@@ -97,15 +103,16 @@ export default function Todos() {
     <SafeAreaView className="bg-black">
       <View className="flex h-screen bg-black px-2">
         {todos.length === 0 && (
-          <View className="flex h-1/2 items-center justify-center gap-2">
+          <View className="my-4 flex items-center justify-center gap-2">
             <Text className="text-xl font-bold text-white">
-              There are no todos, please add one
+              There are no todos, please either
             </Text>
             <Pressable
               onPress={importSampleTodos}
               className="rounded bg-stone-500 px-4 py-2">
               <Text className="text-2xl">Import sample todos</Text>
             </Pressable>
+            <Text className="text-xl font-bold text-white">or add one</Text>
           </View>
         )}
         <FlexScrollView>
@@ -118,11 +125,38 @@ export default function Todos() {
               handleTodoUpdate={handleTodoUpdate}
             />
           ))}
+          <NewTodo addTodo={addTodo} />
         </FlexScrollView>
       </View>
     </SafeAreaView>
   );
 }
+
+const NewTodo = ({ addTodo }: { addTodo: (text: string) => void }) => {
+  const [newTodo, setNewTodo] = useState("");
+  const handleAdd = () => {
+    addTodo(newTodo);
+    setNewTodo("");
+  };
+
+  return (
+    <View className="flex min-h-[80px] w-full flex-row items-center gap-4 rounded border border-stone-400 p-2">
+      <View className="flex flex-grow">
+        <TextInput
+          value={newTodo}
+          onChangeText={(t) => setNewTodo(t)}
+          multiline
+          numberOfLines={4}
+          placeholder="New todo..."
+          className="font-semibold text-white placeholder:text-gray-400"
+        />
+      </View>
+      <Pressable onPress={handleAdd}>
+        <FontAwesome6 name="plus" size={32} color="white" />
+      </Pressable>
+    </View>
+  );
+};
 
 const TodoCard = ({
   todo,
@@ -140,7 +174,7 @@ const TodoCard = ({
   handleTodoUpdate: (todo: TodosSelect) => void;
 }) => {
   return (
-    <Link href={`/(todos)/${todo.id}`} asChild>
+    <Link href={`/(todos)/${todo.id}`} asChild disabled={todo.id === -1}>
       <Pressable>
         <Swipeable
           renderRightActions={RightActions}
@@ -152,6 +186,7 @@ const TodoCard = ({
               onPress={() => handleTodoToggle(todo)}
               className={`h-8 w-8 rounded-full border ${todo.complete ? "bg-green-600" : ""}`}
             />
+            {/* w-0 is not a typo, it is what makes the text wrap for some reason */}
             <View className="flex w-0 flex-grow">
               <TextInput
                 value={todo.text}
@@ -161,9 +196,9 @@ const TodoCard = ({
                 className="font-semibold"
               />
             </View>
-            <Pressable>
+            <View>
               <Entypo name="stopwatch" size={36} color="black" />
-            </Pressable>
+            </View>
           </View>
         </Swipeable>
       </Pressable>

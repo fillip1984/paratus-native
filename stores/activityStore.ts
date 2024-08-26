@@ -190,8 +190,6 @@ export const createActivitiesFromRoutine = async (routineId: number) => {
 };
 
 const createOneTimeActivity = async (routine: RoutineWithScheduledDays) => {
-  console.log("creating one time activity for routine", routine.name);
-
   //   const userTimezone = await getUserTimezone(userId);
 
   if (!routine.endDate) {
@@ -221,8 +219,6 @@ const createOneTimeActivity = async (routine: RoutineWithScheduledDays) => {
 };
 
 const createDailyActivities = async (routine: RoutineWithScheduledDays) => {
-  console.log("creating daily activities for routine", routine.name);
-
   const activitiesToAdd = [];
 
   //   const userTimezone = await getUserTimezone(userId);
@@ -274,14 +270,10 @@ const createDailyActivities = async (routine: RoutineWithScheduledDays) => {
     startDate = addDays(startDate, 1);
   }
 
-  const result = await localDb.insert(activities).values(activitiesToAdd);
-  console.log(
-    `created ${result.changes} daily activities for routine: ${routine.name}`,
-  );
+  await localDb.insert(activities).values(activitiesToAdd);
 };
 
 const createWeeklyActivities = async (routine: RoutineWithScheduledDays) => {
-  console.log("creating weekly activities for routine", routine.name);
   let datesToAdd: Date[] = [];
 
   //   const userTimezone = await getUserTimezone(userId);
@@ -351,8 +343,6 @@ const createWeeklyActivities = async (routine: RoutineWithScheduledDays) => {
 };
 
 const createMonthlyActivities = async (routine: RoutineWithScheduledDays) => {
-  console.log("creating monthly activities for routine", routine.name);
-
   const datesToAdd: Date[] = [];
 
   //   const userTimezone = await getUserTimezone(userId);
@@ -413,8 +403,6 @@ const createMonthlyActivities = async (routine: RoutineWithScheduledDays) => {
 };
 
 const createYearlyActivities = async (routine: RoutineWithScheduledDays) => {
-  console.log("creating yearly activities for routine", routine.name);
-
   if (!routine.scheduledDays[0]) {
     throw Error(
       "Unable to create yearly activities without scheduled days value",

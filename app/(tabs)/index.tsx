@@ -52,7 +52,6 @@ export default function Home() {
     let sunriseInfo = null;
     if (status === "granted") {
       try {
-        // console.log({ status });
         const location = await Location.getLastKnownPositionAsync();
         if (location) {
           sunriseInfo = await fetchSunInfo(
@@ -60,7 +59,6 @@ export default function Home() {
             location.coords.latitude,
             location.coords.longitude,
           );
-          // console.log({ sunriseInfo });
           if (sunriseInfo) {
             const sunriseActivity = {
               routine: {
@@ -118,7 +116,6 @@ export default function Home() {
             Notifications.cancelScheduledNotificationAsync(c.identifier),
           );
           if (act.routine) {
-            // console.log(`setting up notifications for ${act.routine.name}`);
             scheduleNotificationForActivity(act);
           }
         });

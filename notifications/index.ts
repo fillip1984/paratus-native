@@ -1,9 +1,9 @@
-import { format } from "date-fns";
+import { addMinutes } from "date-fns";
 import * as Notifications from "expo-notifications";
 import { Notification } from "expo-notifications";
 
 import { ActivityWithPartialRoutine } from "@/stores/activityStore";
-import { h_mm_ampm } from "@/utils/date";
+import { TodosSelect } from "@/stores/todoStore";
 
 export interface notificationRequest {
   title: string;
@@ -15,9 +15,6 @@ export interface notificationRequest {
 export const scheduleNotificationForActivity = async (
   activity: ActivityWithPartialRoutine,
 ) => {
-  console.log(
-    `scheduling activity: ${activity.routine.name} to notify at: ${format(activity.start, h_mm_ampm)}`,
-  );
   const schedulingOptions = {
     content: {
       title: activity.routine.name,
@@ -30,8 +27,44 @@ export const scheduleNotificationForActivity = async (
   };
   const scheduledId =
     await Notifications.scheduleNotificationAsync(schedulingOptions);
-  console.log(`Notification scheduled with id: ${scheduledId}`);
   return scheduledId;
+};
+
+export const scheduleNotificationForTodo = async (todo: TodosSelect) => {
+  if (!todo.timer) {
+    console.warn("No timer set");
+    return;
+  }
+
+  const notificationTime = addMinutes(new Date(), todo.timer);
+  const schedulingOptions = {
+    content: {
+      title: "Todo complete",
+      body: todo.text,
+      interruptionLevel: "timeSensitive",
+      sound: true,
+      data: { todoId: todo.id },
+    } as Notifications.NotificationContentInput,
+    trigger: notificationTime,
+  };
+  const scheduledId =
+    await Notifications.scheduleNotificationAsync(schedulingOptions);
+  return scheduledId;
+};
+
+export const unscheduleNotificationsForTodo = async (
+  todoId: number,
+  excluding?: string,
+) => {
+  const notifications = await Notifications.getAllScheduledNotificationsAsync();
+  notifications.forEach((n) => {
+    const data = n.content.data;
+    if (data.todoId === todoId) {
+      if (n.identifier !== excluding) {
+        Notifications.cancelScheduledNotificationAsync(n.identifier);
+      }
+    }
+  });
 };
 
 /**
