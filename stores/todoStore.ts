@@ -28,11 +28,11 @@ export const toggleTodo = async (id: number, complete: boolean) => {
 };
 
 export const updateTodo = async (todoUpdates: TodosSelect) => {
-  console.log("updating the todo");
   return await localDb
     .update(todos)
     .set({
       text: todoUpdates.text,
+      timer: todoUpdates.timer,
       complete: todoUpdates.complete,
     })
     .where(eq(todos.id, todoUpdates.id));
