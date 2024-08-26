@@ -187,6 +187,7 @@ export const todos = sqliteTable("todo", {
   id: integer("id").primaryKey(),
   createdAt: text("createdAt").default(sql`(CURRENT_TIMESTAMP)`),
   text: text("text").notNull(),
+  timer: integer("timer").default(0),
   complete: integer("complete", { mode: "boolean" }).default(false),
 });
 

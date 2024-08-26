@@ -1,0 +1,1 @@
+ALTER TABLE todo ADD `timer` integer DEFAULT 0;
