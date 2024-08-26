@@ -1,4 +1,5 @@
-import { useFocusEffect } from "expo-router";
+import Entypo from "@expo/vector-icons/Entypo";
+import { Link, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   Animated,
@@ -139,27 +140,34 @@ const TodoCard = ({
   handleTodoUpdate: (todo: TodosSelect) => void;
 }) => {
   return (
-    <Swipeable
-      renderRightActions={RightActions}
-      onSwipeableOpen={(direction, swipeable) =>
-        handleSwipe(direction, swipeable, todo)
-      }>
-      <View className="flex min-h-[100px] w-full flex-row items-center gap-4 rounded bg-stone-400 p-2">
-        <Pressable
-          onPress={() => handleTodoToggle(todo)}
-          className={`h-8 w-8 rounded-full border ${todo.complete ? "bg-green-600" : ""}`}
-        />
-        <View className="flex w-0 flex-grow">
-          <TextInput
-            value={todo.text}
-            onChangeText={(t) => handleTodoUpdate({ ...todo, text: t })}
-            multiline
-            numberOfLines={4}
-            className="font-semibold"
-          />
-        </View>
-      </View>
-    </Swipeable>
+    <Link href={`/(todos)/${todo.id}`} asChild>
+      <Pressable>
+        <Swipeable
+          renderRightActions={RightActions}
+          onSwipeableOpen={(direction, swipeable) =>
+            handleSwipe(direction, swipeable, todo)
+          }>
+          <View className="flex min-h-[100px] w-full flex-row items-center gap-4 rounded bg-stone-400 p-2">
+            <Pressable
+              onPress={() => handleTodoToggle(todo)}
+              className={`h-8 w-8 rounded-full border ${todo.complete ? "bg-green-600" : ""}`}
+            />
+            <View className="flex w-0 flex-grow">
+              <TextInput
+                value={todo.text}
+                onChangeText={(t) => handleTodoUpdate({ ...todo, text: t })}
+                multiline
+                numberOfLines={4}
+                className="font-semibold"
+              />
+            </View>
+            <Pressable>
+              <Entypo name="stopwatch" size={36} color="black" />
+            </Pressable>
+          </View>
+        </Swipeable>
+      </Pressable>
+    </Link>
   );
 };
 
