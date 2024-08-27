@@ -32,30 +32,32 @@ export default function TimelineCard({
     }
   };
   return (
-    <Swipeable
-      renderLeftActions={(p, d) =>
-        LeftActions(p, d, activity, handleCompleteOrSkip)
-      }
-      renderRightActions={RightActions}
-      onSwipeableOpen={(direction, swipeable) =>
-        handleSwipe(direction, swipeable)
-      }>
-      <View className="flex h-28 w-full flex-row rounded bg-stone-300">
-        <View className="flex w-16 items-center justify-center p-2">
-          <FontAwesome5 name="running" size={42} color="black" />
-        </View>
-        <View
-          className={`flex flex-1 justify-center ${activity.complete ? "bg-green-600" : activity.skipped ? "bg-red-600" : "bg-stone-600"} pl-2`}>
-          <Text className="text-xl text-black">{activity.routine.name}</Text>
-          <View className="flex flex-row items-center gap-1">
-            <Feather name="clock" size={20} color="black" />
-            <Text className="text-xl text-black">
-              {`${format(activity.start, h_mm_ampm)} - ${format(activity.end, h_mm_ampm)}`}
-            </Text>
+    <View className="py-2">
+      <Swipeable
+        renderLeftActions={(p, d) =>
+          LeftActions(p, d, activity, handleCompleteOrSkip)
+        }
+        renderRightActions={RightActions}
+        onSwipeableOpen={(direction, swipeable) =>
+          handleSwipe(direction, swipeable)
+        }>
+        <View className="flex h-28 w-full flex-row rounded bg-stone-300">
+          <View className="flex w-16 items-center justify-center p-2">
+            <FontAwesome5 name="running" size={42} color="black" />
+          </View>
+          <View
+            className={`flex flex-1 justify-center ${activity.complete ? "bg-green-600" : activity.skipped ? "bg-red-600" : "bg-stone-600"} pl-2`}>
+            <Text className="text-xl text-black">{activity.routine.name}</Text>
+            <View className="flex flex-row items-center gap-1">
+              <Feather name="clock" size={20} color="black" />
+              <Text className="text-xl text-black">
+                {`${format(activity.start, h_mm_ampm)} - ${format(activity.end, h_mm_ampm)}`}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
-    </Swipeable>
+      </Swipeable>
+    </View>
   );
 }
 

@@ -34,7 +34,6 @@ export type SunInfo = {
   dayLength: Duration;
 };
 
-// TODO: maybe move to a service?
 export default async function fetchSunInfo(
   date: Date,
   latitude: number,
@@ -46,10 +45,9 @@ export default async function fetchSunInfo(
   const response = await fetch(apiUrl);
 
   if (!response.ok) {
-    console.warn(
-      "Error occurred while fetching sunrise/sunset info, info is nice to have only so not throwing an error",
+    throw Error(
+      "Error occurred while fetching sunrise/sunset info: " + response,
     );
-    return null;
   }
 
   const rawResponse = (await response.json()) as SunInfoResponse;

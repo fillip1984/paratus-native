@@ -35,7 +35,6 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NatureCard } from "../_components/NatureCard";
 import TimelineCard from "../_components/TimelineCard";
 
-import { ActivityFilterType } from "@/db/schema";
 import { scheduleNotificationForActivity } from "@/notifications";
 import {
   ActivityWithPartialRoutine,
@@ -43,13 +42,13 @@ import {
   findActivities,
   skipActivity,
 } from "@/stores/activityStore";
-import fetchSunInfo from "@/stores/sunriseStore";
-import { h_mm_ampm, yyyyMMddHyphenated } from "@/utils/date";
+import fetchSunInfo, { SunInfo } from "@/stores/sunInfoStore";
 
 interface TimelineEntry {
   type: "sunrise" | "sunset" | "nature" | "todo" | "activity" | "header";
   date: Date;
-  activity: ActivityWithPartialRoutine;
+  activity?: ActivityWithPartialRoutine;
+  sunInfo?: SunInfo;
 }
 
 export default function Home() {
@@ -64,80 +63,66 @@ export default function Home() {
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [headers, setHeaders] = useState<number[]>([]);
 
-  // const [activities, setActivities] = useState<ActivityWithPartialRoutine[]>(
-  //   [],
-  // );
-  // const [natureActivities, setNatureActivities] = useState<
-  //   ActivityWithPartialRoutine[]
-  // >([]);
-
-  // TODO: move up to layout and application init
-  const fetchSunriseInfo = async (date: Date) => {
+  const fetchNatureInfo = async (date: Date) => {
     const { status } = await Location.requestForegroundPermissionsAsync();
-    let sunriseInfo = null;
-    if (status === "granted") {
-      try {
-        const location = await Location.getLastKnownPositionAsync();
-        if (location) {
-          sunriseInfo = await fetchSunInfo(
-            date,
-            location.coords.latitude,
-            location.coords.longitude,
-          );
-          if (sunriseInfo) {
-            const sunriseActivity = {
-              routine: {
-                name: "Dawn (first light)",
-                description: `Sunrise is at ${format(sunriseInfo.sunrise, h_mm_ampm)}. Daylight: ${sunriseInfo.dayLength.hours} hrs ${sunriseInfo.dayLength.minutes} mins`,
-              },
-              start: sunriseInfo.dawn,
-              end: sunriseInfo.dawn,
-              id: -998,
-            } as ActivityWithPartialRoutine;
-            // setNatureActivities([sunriseActivity]);
+    if (status !== "granted") {
+      console.warn(
+        "Permission wasn't granted for GSP/location so unable to fetch sun info",
+      );
+      return;
+    }
 
-            const sunsetActivity = {
-              routine: {
-                name: "Dusk (last light)",
-                description: `Sunset is at ${format(sunriseInfo.sunset, h_mm_ampm)}. Daylight: ${sunriseInfo.dayLength.hours} hrs ${sunriseInfo.dayLength.minutes} mins`,
-              },
-              start: sunriseInfo.dusk,
-              end: sunriseInfo.dusk,
-              id: -999,
-            } as ActivityWithPartialRoutine;
-            // setNatureActivities((prev) => [...prev, sunsetActivity]);
-          }
-        } else {
-          return undefined;
-        }
-      } catch (err) {
-        console.warn(
-          "Purposefully ignoring unresolved promises and errors while fetching sunrise info so the rest of activities are shown",
-          err,
-        );
+    try {
+      const location = await Location.getLastKnownPositionAsync();
+      if (!location) {
+        console.warn("Unable to get location info so unable to fetch sun info");
+        return;
       }
+
+      const sunInfo = await fetchSunInfo(
+        date,
+        location.coords.latitude,
+        location.coords.longitude,
+      );
+      return sunInfo;
+    } catch (err) {
+      console.warn(
+        "Failed to fetch sun info, purposefully ignoring unresolved promises and errors while fetching sun info so the rest of activities are shown",
+        err,
+      );
     }
   };
 
   const fetchData = async () => {
-    const result = await findActivities({
+    const activities = await findActivities({
       start: startOfDay(lastWeek.start),
       end: endOfDay(nextWeek.end),
     });
 
     const newTimeline = [] as TimelineEntry[];
-    eachDayOfInterval({ start: lastWeek.start, end: nextWeek.end }).map((d) => {
+    for (const d of eachDayOfInterval({
+      start: lastWeek.start,
+      end: nextWeek.end,
+    })) {
       newTimeline.push({ type: "header", date: d } as TimelineEntry);
-      result
-        .filter((r) => isSameDay(r.start, d))
-        .forEach((r) =>
+      const sunInfo = await fetchNatureInfo(d);
+      if (sunInfo) {
+        newTimeline.push({ type: "sunrise", date: d, sunInfo });
+      }
+      activities
+        .filter((a) => isSameDay(a.start, d))
+        .forEach((a) =>
           newTimeline.push({
             type: "activity",
             date: d,
-            activity: r,
+            activity: a,
           } as TimelineEntry),
         );
-    });
+      if (sunInfo) {
+        newTimeline.push({ type: "sunset", date: d, sunInfo });
+      }
+    }
+
     setTimeline(newTimeline);
     setHeaders(
       newTimeline
@@ -146,63 +131,65 @@ export default function Home() {
     );
   };
 
-  // useEffect(() => {
-  //   const scheduleStuff = async () => {
-  //     if (activities?.length > 0) {
-  //       const notifications =
-  //         await Notifications.getAllScheduledNotificationsAsync();
-  //       activities.forEach((act) => {
-  //         const cancel = notifications.filter(
-  //           (n) => n.content.data.activityId === act.id,
-  //         );
-  //         cancel.forEach((c) =>
-  //           Notifications.cancelScheduledNotificationAsync(c.identifier),
-  //         );
-  //         if (act.routine) {
-  //           scheduleNotificationForActivity(act);
-  //         }
-  //       });
-  //     }
-  //   };
-  //   scheduleStuff();
-  // }, []);
+  useEffect(() => {
+    const scheduleStuff = async () => {
+      const notifications =
+        await Notifications.getAllScheduledNotificationsAsync();
+      timeline
+        ?.filter((t) => t.type === "activity")
+        .map((t) => t.activity)
+        .forEach((act) => {
+          if (act) {
+            const cancel = notifications.filter(
+              (n) => n.content.data.activityId === act.id,
+            );
+            cancel.forEach((c) =>
+              Notifications.cancelScheduledNotificationAsync(c.identifier),
+            );
+            if (act.routine) {
+              scheduleNotificationForActivity(act);
+            }
+          }
+        });
+    };
+    scheduleStuff();
+  }, [timeline]);
 
   useFocusEffect(
     useCallback(() => {
       fetchData();
-      // fetchSunriseInfo();
     }, []),
   );
-
-  // useEffect(() => {
-  //   fetchActivities();
-  // }, [selectedDate]);
 
   const handleCompleteOrSkip = async (
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => {
-    // switch (action) {
-    //   case "Complete":
-    //     handleComplete(activity);
-    //     fetchActivities();
-    //     Promise.resolve();
-    //     break;
-    //   case "Skip":
-    //     await skipActivity(activity.id);
-    //     fetchActivities();
-    //     Promise.resolve();
-    //     break;
-    //   default:
-    //     Promise.reject(
-    //       Error(
-    //         "Unexpected action, was expecting Complete or Skip only, received: " +
-    //           action +
-    //           " on activity: " +
-    //           activity.routine.name,
-    //       ),
-    //     );
-    // }
+    switch (action) {
+      case "Complete":
+        handleComplete(activity);
+        setTimeline((prev) =>
+          prev.filter((t) => t.activity?.id !== activity.id),
+        );
+        Promise.resolve();
+        break;
+      case "Skip":
+        await skipActivity(activity.id);
+        setTimeline((prev) =>
+          prev.filter((t) => t.activity?.id !== activity.id),
+        );
+        Promise.resolve();
+        break;
+      default:
+        Promise.reject(
+          Error(
+            "Unexpected action, was expecting Complete or Skip only, received: " +
+              action +
+              " on activity: " +
+              activity.routine.name,
+          ),
+        );
+    }
   };
 
   const handleComplete = async (activity: ActivityWithPartialRoutine) => {
@@ -243,6 +230,7 @@ export default function Home() {
           timeline={timeline}
           headers={headers}
           handleCompleteOrSkip={handleCompleteOrSkip}
+          selectedDate={selectedDate}
         />
       </View>
     </SafeAreaView>
@@ -284,7 +272,6 @@ const Header = ({
           <Pressable
             onPress={() => {
               setSelectedDate(today);
-              console.log(coordinates);
               scrollViewRef.current?.scrollTo({
                 x: coordinates,
                 y: 0,
@@ -356,7 +343,6 @@ const Week = ({
             className={classNames({
               "flex h-10 w-10 items-center justify-center rounded-full bg-red-500":
                 isSameDay(selectedDate, d),
-              // "flex h-10 w-10 items-center justify-center": isToday(d),
               "flex h-10 w-10 items-center justify-center": true,
             })}>
             <Text
@@ -388,6 +374,7 @@ const Timeline = ({
   timeline,
   headers,
   handleCompleteOrSkip,
+  selectedDate,
 }: {
   timeline: TimelineEntry[];
   headers: number[];
@@ -395,15 +382,41 @@ const Timeline = ({
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => Promise<void>;
+  selectedDate: Date;
 }) => {
+  const agendaScrollViewRef = useRef<ScrollView>(null);
+  const [dayCoordinates, setDayCoordinates] = useState<
+    { date: Date; y: number }[]
+  >([]);
+
+  useEffect(() => {
+    const coordinate = dayCoordinates.find((c) =>
+      isSameDay(c.date, selectedDate),
+    );
+    if (coordinate) {
+      agendaScrollViewRef.current?.scrollTo({
+        x: 0,
+        y: coordinate.y,
+        animated: true,
+      });
+    }
+  }, [selectedDate, dayCoordinates]);
+
   return (
     <View className="flex-1">
       <GestureHandlerRootView>
-        <ScrollView stickyHeaderIndices={headers}>
+        <ScrollView stickyHeaderIndices={headers} ref={agendaScrollViewRef}>
           {timeline.map((timelineEntry) => {
             if (timelineEntry.type === "header") {
               return (
                 <View
+                  onLayout={(e) => {
+                    const layout = e.nativeEvent.layout;
+                    setDayCoordinates((prev) => [
+                      ...prev,
+                      { date: timelineEntry.date, y: layout.y },
+                    ]);
+                  }}
                   key={timelineEntry.date.toISOString() + timelineEntry.type}
                   className="bg-black">
                   <Text className="py-2 text-xl font-bold text-white">
@@ -437,7 +450,10 @@ const Timeline = ({
                   </Text>
                 </View>
               );
-            } else if (timelineEntry.type === "activity") {
+            } else if (
+              timelineEntry.type === "activity" &&
+              timelineEntry.activity
+            ) {
               return (
                 <TimelineCard
                   key={timelineEntry.activity.id}
@@ -445,26 +461,20 @@ const Timeline = ({
                   handleCompleteOrSkip={handleCompleteOrSkip}
                 />
               );
+            } else if (
+              (timelineEntry.type === "sunrise" ||
+                timelineEntry.type === "sunset") &&
+              timelineEntry.sunInfo
+            ) {
+              return (
+                <NatureCard
+                  key={timelineEntry.date.toISOString() + timelineEntry.type}
+                  nature={timelineEntry.sunInfo}
+                  type={timelineEntry.type}
+                />
+              );
             }
           })}
-          {/* {natureActivities.length > 0 && (
-            <NatureCard nature={natureActivities[0]} />
-          )}
-          {activities.map((activity) => (
-            <TimelineCard
-              key={activity.id}
-              activity={activity}
-              handleCompleteOrSkip={handleCompleteOrSkip}
-            />
-          ))}
-          {natureActivities.slice(1).map((nature) => (
-            <NatureCard key={nature.id} nature={nature} />
-          ))}
-          {activities.length === 0 && (
-            <Text className="my-8 text-center text-3xl text-white">
-              No activities
-            </Text>
-          )} */}
         </ScrollView>
       </GestureHandlerRootView>
     </View>
