@@ -23,7 +23,6 @@ import { RoutineWithScheduledDays, findRoutine } from "./routineStore";
 
 import { localDb } from "@/db";
 import {
-  ActivityFilterType,
   InsertActivity,
   InsertBloodPressureReading,
   InsertNote,
@@ -58,20 +57,20 @@ export type ActivityWithPartialRoutine = UnboxArray<
 export const findActivities = async ({
   start,
   end,
-  filter,
 }: {
   start: Date;
   end: Date;
-  filter: ActivityFilterType;
 }) => {
   const result = await localDb.query.activities.findMany({
     where: and(
-      filter !== "All"
-        ? and(
-            eq(activities.complete, filter === "Complete"),
-            eq(activities.skipped, filter === "Skipped"),
-          )
-        : undefined,
+      eq(activities.complete, false),
+      eq(activities.skipped, false),
+      // filter !== "All"
+      //   ? and(
+      //       eq(activities.complete, filter === "Complete"),
+      //       eq(activities.skipped, filter === "Skipped"),
+      //     )
+      //   : undefined,
       between(activities.start, start, end),
     ),
     with: {

@@ -1,13 +1,22 @@
-import { Feather } from "@expo/vector-icons";
-import RNDateTimePicker from "@react-native-community/datetimepicker";
+import Entypo from "@expo/vector-icons/Entypo";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import classNames from "classnames";
 import {
-  addDays,
+  addWeeks,
+  eachDayOfInterval,
   endOfDay,
+  endOfWeek,
   format,
+  Interval,
+  interval,
+  isFuture,
+  isPast,
+  isSameDay,
   isToday,
   isTomorrow,
   isYesterday,
   startOfDay,
+  startOfWeek,
 } from "date-fns";
 import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
@@ -17,13 +26,14 @@ import {
   SetStateAction,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
-import { Pressable, SafeAreaView, Text, View } from "react-native";
+import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { NatureCard } from "../_components/NatureCard";
 import TimelineCard from "../_components/TimelineCard";
-import { FlexScrollView } from "../_components/ui/FlexScrollView";
 
 import { ActivityFilterType } from "@/db/schema";
 import { scheduleNotificationForActivity } from "@/notifications";
@@ -34,20 +44,35 @@ import {
   skipActivity,
 } from "@/stores/activityStore";
 import fetchSunInfo from "@/stores/sunriseStore";
-import { h_mm_ampm } from "@/utils/date";
+import { h_mm_ampm, yyyyMMddHyphenated } from "@/utils/date";
+
+interface TimelineEntry {
+  type: "sunrise" | "sunset" | "nature" | "todo" | "activity" | "header";
+  date: Date;
+  activity: ActivityWithPartialRoutine;
+}
 
 export default function Home() {
+  const today = new Date();
+  const sunday = startOfWeek(today);
+  const saturday = endOfWeek(today);
+  const thisWeek = interval(sunday, saturday);
+  const lastWeek = interval(addWeeks(sunday, -1), addWeeks(saturday, -1));
+  const nextWeek = interval(addWeeks(sunday, 1), addWeeks(saturday, 1));
+
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filter, setFilter] = useState<ActivityFilterType>("Available");
-  const [activities, setActivities] = useState<ActivityWithPartialRoutine[]>(
-    [],
-  );
-  const [natureActivities, setNatureActivities] = useState<
-    ActivityWithPartialRoutine[]
-  >([]);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
+  const [headers, setHeaders] = useState<number[]>([]);
+
+  // const [activities, setActivities] = useState<ActivityWithPartialRoutine[]>(
+  //   [],
+  // );
+  // const [natureActivities, setNatureActivities] = useState<
+  //   ActivityWithPartialRoutine[]
+  // >([]);
 
   // TODO: move up to layout and application init
-  const fetchSunriseInfo = async () => {
+  const fetchSunriseInfo = async (date: Date) => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     let sunriseInfo = null;
     if (status === "granted") {
@@ -55,7 +80,7 @@ export default function Home() {
         const location = await Location.getLastKnownPositionAsync();
         if (location) {
           sunriseInfo = await fetchSunInfo(
-            selectedDate,
+            date,
             location.coords.latitude,
             location.coords.longitude,
           );
@@ -69,7 +94,7 @@ export default function Home() {
               end: sunriseInfo.dawn,
               id: -998,
             } as ActivityWithPartialRoutine;
-            setNatureActivities([sunriseActivity]);
+            // setNatureActivities([sunriseActivity]);
 
             const sunsetActivity = {
               routine: {
@@ -80,7 +105,7 @@ export default function Home() {
               end: sunriseInfo.dusk,
               id: -999,
             } as ActivityWithPartialRoutine;
-            setNatureActivities((prev) => [...prev, sunsetActivity]);
+            // setNatureActivities((prev) => [...prev, sunsetActivity]);
           }
         } else {
           return undefined;
@@ -94,72 +119,90 @@ export default function Home() {
     }
   };
 
-  const fetchActivities = async () => {
+  const fetchData = async () => {
     const result = await findActivities({
-      start: startOfDay(selectedDate),
-      end: endOfDay(selectedDate),
-      filter,
+      start: startOfDay(lastWeek.start),
+      end: endOfDay(nextWeek.end),
     });
-    setActivities(result);
+
+    const newTimeline = [] as TimelineEntry[];
+    eachDayOfInterval({ start: lastWeek.start, end: nextWeek.end }).map((d) => {
+      newTimeline.push({ type: "header", date: d } as TimelineEntry);
+      result
+        .filter((r) => isSameDay(r.start, d))
+        .forEach((r) =>
+          newTimeline.push({
+            type: "activity",
+            date: d,
+            activity: r,
+          } as TimelineEntry),
+        );
+    });
+    setTimeline(newTimeline);
+    setHeaders(
+      newTimeline
+        .map((t, i) => (t.type === "header" ? i : -1))
+        .filter((t) => t !== -1),
+    );
   };
 
-  useEffect(() => {
-    const scheduleStuff = async () => {
-      if (activities?.length > 0) {
-        const notifications =
-          await Notifications.getAllScheduledNotificationsAsync();
-        activities.forEach((act) => {
-          const cancel = notifications.filter(
-            (n) => n.content.data.activityId === act.id,
-          );
-          cancel.forEach((c) =>
-            Notifications.cancelScheduledNotificationAsync(c.identifier),
-          );
-          if (act.routine) {
-            scheduleNotificationForActivity(act);
-          }
-        });
-      }
-    };
-    scheduleStuff();
-  }, [activities]);
+  // useEffect(() => {
+  //   const scheduleStuff = async () => {
+  //     if (activities?.length > 0) {
+  //       const notifications =
+  //         await Notifications.getAllScheduledNotificationsAsync();
+  //       activities.forEach((act) => {
+  //         const cancel = notifications.filter(
+  //           (n) => n.content.data.activityId === act.id,
+  //         );
+  //         cancel.forEach((c) =>
+  //           Notifications.cancelScheduledNotificationAsync(c.identifier),
+  //         );
+  //         if (act.routine) {
+  //           scheduleNotificationForActivity(act);
+  //         }
+  //       });
+  //     }
+  //   };
+  //   scheduleStuff();
+  // }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchActivities();
-      fetchSunriseInfo();
-    }, [selectedDate, filter]),
+      fetchData();
+      // fetchSunriseInfo();
+    }, []),
   );
 
-  useEffect(() => {
-    fetchActivities();
-  }, [selectedDate, filter]);
+  // useEffect(() => {
+  //   fetchActivities();
+  // }, [selectedDate]);
 
   const handleCompleteOrSkip = async (
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => {
-    switch (action) {
-      case "Complete":
-        handleComplete(activity);
-        fetchActivities();
-        Promise.resolve();
-        break;
-      case "Skip":
-        await skipActivity(activity.id);
-        fetchActivities();
-        Promise.resolve();
-        break;
-      default:
-        Promise.reject(
-          Error(
-            "Unexpected action, was expecting Complete or Skip only, received: " +
-              action +
-              " on activity: " +
-              activity.routine.name,
-          ),
-        );
-    }
+    // switch (action) {
+    //   case "Complete":
+    //     handleComplete(activity);
+    //     fetchActivities();
+    //     Promise.resolve();
+    //     break;
+    //   case "Skip":
+    //     await skipActivity(activity.id);
+    //     fetchActivities();
+    //     Promise.resolve();
+    //     break;
+    //   default:
+    //     Promise.reject(
+    //       Error(
+    //         "Unexpected action, was expecting Complete or Skip only, received: " +
+    //           action +
+    //           " on activity: " +
+    //           activity.routine.name,
+    //       ),
+    //     );
+    // }
   };
 
   const handleComplete = async (activity: ActivityWithPartialRoutine) => {
@@ -187,16 +230,18 @@ export default function Home() {
   return (
     // TODO: still can't figure out how to style the safe area's text. Tried StatusBar from expo but can't get it to comply
     <SafeAreaView className="bg-black">
-      <View className="h-screen">
+      <View className="flex h-screen gap-2">
         <Header
-          activities={activities}
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
+          lastWeek={lastWeek}
+          thisWeek={thisWeek}
+          nextWeek={nextWeek}
+          today={today}
         />
-        <TimelineFilter filter={filter} setFilter={setFilter} />
         <Timeline
-          activities={activities}
-          natureActivities={natureActivities}
+          timeline={timeline}
+          headers={headers}
           handleCompleteOrSkip={handleCompleteOrSkip}
         />
       </View>
@@ -205,46 +250,126 @@ export default function Home() {
 }
 
 const Header = ({
-  activities,
+  selectedDate,
+  setSelectedDate,
+  lastWeek,
+  thisWeek,
+  nextWeek,
+  today,
+}: {
+  selectedDate: Date;
+  setSelectedDate: Dispatch<SetStateAction<Date>>;
+  lastWeek: Interval;
+  thisWeek: Interval;
+  nextWeek: Interval;
+  today: Date;
+}) => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [coordinates, setCoordinates] = useState(0);
+
+  useEffect(() => {
+    scrollViewRef.current?.scrollTo({
+      x: coordinates,
+      y: 0,
+    });
+  }, [coordinates]);
+
+  return (
+    <View>
+      <View className="mb-2 flex flex-row items-center justify-between">
+        <View className="flex flex-row items-center gap-2">
+          <Text className="text-xl text-white">
+            {format(selectedDate, "MMM yyyy")} &gt;
+          </Text>
+          <Pressable
+            onPress={() => {
+              setSelectedDate(today);
+              console.log(coordinates);
+              scrollViewRef.current?.scrollTo({
+                x: coordinates,
+                y: 0,
+                animated: true,
+              });
+            }}
+            className="relative">
+            <Ionicons name="calendar-clear-outline" size={32} color="#ef4444" />
+            <Text className="absolute right-2 top-3 text-red-500">
+              {format(today, "d")}
+            </Text>
+          </Pressable>
+        </View>
+        <Avatar />
+      </View>
+      <ScrollView
+        ref={scrollViewRef}
+        pagingEnabled
+        horizontal
+        showsHorizontalScrollIndicator={false}>
+        <View className="flex flex-row flex-nowrap overflow-hidden">
+          <Week
+            week={lastWeek}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+          />
+          <View
+            onLayout={(e) => {
+              const layout = e.nativeEvent.layout;
+              setCoordinates(layout.x);
+            }}>
+            <Week
+              week={thisWeek}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+          </View>
+          <Week
+            week={nextWeek}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+          />
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const Week = ({
+  week,
   selectedDate,
   setSelectedDate,
 }: {
-  activities: ActivityWithPartialRoutine[];
+  week: Interval;
   selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
 }) => {
-  const formatForDayLabel = () => {
-    if (isToday(selectedDate)) return "Today";
-    if (isYesterday(selectedDate)) return "Yesterday";
-    if (isTomorrow(selectedDate)) return "Tomorrow";
-    return format(selectedDate, "EEEE");
+  const isSelected = (d: Date) => {
+    return isSameDay(d, selectedDate);
   };
+
   return (
-    <View className="relative items-center">
-      <Text className="text-2xl text-white">
-        {activities.length}{" "}
-        <Text className="text-white/50">activities for</Text>{" "}
-        {formatForDayLabel()}
-      </Text>
-      <View className="flex-row items-center justify-around">
-        <Pressable onPress={() => setSelectedDate((prev) => addDays(prev, -1))}>
-          <Feather name="chevron-left" size={36} color="white" />
-        </Pressable>
-        {/* TODO: figure out how to push this center */}
-        <RNDateTimePicker
-          value={selectedDate}
-          onChange={(_, d) => {
-            if (d) setSelectedDate(d);
-          }}
-          mode="date"
-          themeVariant="dark"
-          accentColor="white"
-        />
-        <Pressable onPress={() => setSelectedDate((prev) => addDays(prev, 1))}>
-          <Feather name="chevron-right" size={36} color="white" />
-        </Pressable>
-      </View>
-      <Avatar />
+    <View className="flex w-screen flex-row">
+      {eachDayOfInterval(week).map((d) => (
+        <View key={d.getDate()} className="flex flex-1 items-center gap-4">
+          <Text className="text-white">{format(d, "E")}</Text>
+          <Pressable
+            onPress={() => setSelectedDate(d)}
+            className={classNames({
+              "flex h-10 w-10 items-center justify-center rounded-full bg-red-500":
+                isSameDay(selectedDate, d),
+              // "flex h-10 w-10 items-center justify-center": isToday(d),
+              "flex h-10 w-10 items-center justify-center": true,
+            })}>
+            <Text
+              className={classNames("text-2xl", {
+                "text-red-500": isToday(d) && !isSelected(d),
+                "text-white": isFuture(d) || isSelected(d),
+                "text-gray-600": isPast(d) && !isToday(d),
+              })}>
+              {d.getDate()}
+            </Text>
+          </Pressable>
+        </View>
+      ))}
     </View>
   );
 };
@@ -252,53 +377,20 @@ const Header = ({
 const Avatar = () => {
   return (
     <Link href="/(modals)/preferences" asChild>
-      <Pressable className="absolute right-0 top-0 flex h-14 w-14 items-center justify-center rounded-full bg-stone-400">
+      <Pressable className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-400">
         <Text>PH</Text>
       </Pressable>
     </Link>
   );
 };
 
-const TimelineFilter = ({
-  filter,
-  setFilter,
-}: {
-  filter: ActivityFilterType;
-  setFilter: Dispatch<SetStateAction<ActivityFilterType>>;
-}) => {
-  return (
-    <Pressable className="flex flex-row px-2 py-4">
-      <Pressable
-        onPress={() => setFilter("Available")}
-        className={`w-1/4 items-center rounded-l-lg p-4 ${filter === "Available" ? "bg-stone-200" : "bg-stone-500"}`}>
-        <Text>Available</Text>
-      </Pressable>
-      <Pressable
-        onPress={() => setFilter("Complete")}
-        className={`w-1/4 items-center p-4 ${filter === "Complete" ? "bg-stone-200" : "bg-stone-500"}`}>
-        <Text>Complete</Text>
-      </Pressable>
-      <Pressable
-        onPress={() => setFilter("Skipped")}
-        className={`w-1/4 items-center p-4 ${filter === "Skipped" ? "bg-stone-200" : "bg-stone-500"}`}>
-        <Text>Skipped</Text>
-      </Pressable>
-      <Pressable
-        onPress={() => setFilter("All")}
-        className={`w-1/4 items-center rounded-r-lg p-4 ${filter === "All" ? "bg-stone-200" : "bg-stone-500"}`}>
-        <Text>All</Text>
-      </Pressable>
-    </Pressable>
-  );
-};
-
 const Timeline = ({
-  activities,
-  natureActivities,
+  timeline,
+  headers,
   handleCompleteOrSkip,
 }: {
-  activities: ActivityWithPartialRoutine[];
-  natureActivities: ActivityWithPartialRoutine[];
+  timeline: TimelineEntry[];
+  headers: number[];
   handleCompleteOrSkip: (
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
@@ -306,26 +398,75 @@ const Timeline = ({
 }) => {
   return (
     <View className="flex-1">
-      <FlexScrollView>
-        {natureActivities.length > 0 && (
-          <NatureCard nature={natureActivities[0]} />
-        )}
-        {activities.map((activity) => (
-          <TimelineCard
-            key={activity.id}
-            activity={activity}
-            handleCompleteOrSkip={handleCompleteOrSkip}
-          />
-        ))}
-        {natureActivities.slice(1).map((nature) => (
-          <NatureCard key={nature.id} nature={nature} />
-        ))}
-        {activities.length === 0 && (
-          <Text className="my-8 text-center text-3xl text-white">
-            No activities
-          </Text>
-        )}
-      </FlexScrollView>
+      <GestureHandlerRootView>
+        <ScrollView stickyHeaderIndices={headers}>
+          {timeline.map((timelineEntry) => {
+            if (timelineEntry.type === "header") {
+              return (
+                <View
+                  key={timelineEntry.date.toISOString() + timelineEntry.type}
+                  className="bg-black">
+                  <Text className="py-2 text-xl font-bold text-white">
+                    {format(timelineEntry.date, "MMM dd")}{" "}
+                    <Entypo name="dot-single" size={24} color="white" />
+                    {isYesterday(timelineEntry.date) ? (
+                      <>
+                        Yesterday
+                        <Entypo name="dot-single" size={24} color="white" />
+                      </>
+                    ) : (
+                      ""
+                    )}
+                    {isToday(timelineEntry.date) ? (
+                      <>
+                        Today
+                        <Entypo name="dot-single" size={24} color="white" />
+                      </>
+                    ) : (
+                      ""
+                    )}
+                    {isTomorrow(timelineEntry.date) ? (
+                      <>
+                        Tomorrow
+                        <Entypo name="dot-single" size={24} color="white" />
+                      </>
+                    ) : (
+                      ""
+                    )}
+                    {format(timelineEntry.date, "EEEE")}
+                  </Text>
+                </View>
+              );
+            } else if (timelineEntry.type === "activity") {
+              return (
+                <TimelineCard
+                  key={timelineEntry.activity.id}
+                  activity={timelineEntry.activity}
+                  handleCompleteOrSkip={handleCompleteOrSkip}
+                />
+              );
+            }
+          })}
+          {/* {natureActivities.length > 0 && (
+            <NatureCard nature={natureActivities[0]} />
+          )}
+          {activities.map((activity) => (
+            <TimelineCard
+              key={activity.id}
+              activity={activity}
+              handleCompleteOrSkip={handleCompleteOrSkip}
+            />
+          ))}
+          {natureActivities.slice(1).map((nature) => (
+            <NatureCard key={nature.id} nature={nature} />
+          ))}
+          {activities.length === 0 && (
+            <Text className="my-8 text-center text-3xl text-white">
+              No activities
+            </Text>
+          )} */}
+        </ScrollView>
+      </GestureHandlerRootView>
     </View>
   );
 };
