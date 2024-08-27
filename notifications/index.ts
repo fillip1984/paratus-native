@@ -1,4 +1,4 @@
-import { addMinutes } from "date-fns";
+import { addMinutes, isPast } from "date-fns";
 import * as Notifications from "expo-notifications";
 import { Notification } from "expo-notifications";
 
@@ -15,6 +15,22 @@ export interface notificationRequest {
 export const scheduleNotificationForActivity = async (
   activity: ActivityWithPartialRoutine,
 ) => {
+  if (!activity.start) {
+    // console.warn(
+    //   "Skipping activity notification. Activity does not have a start date. Activity: " +
+    //     activity.routine.name,
+    // );
+    return;
+  }
+
+  if (isPast(activity.start)) {
+    // console.warn(
+    //   "Skipping activity notification. Activity start date is in the past. Activity: " +
+    //     activity.routine.name,
+    // );
+    return;
+  }
+
   const schedulingOptions = {
     content: {
       title: activity.routine.name,
