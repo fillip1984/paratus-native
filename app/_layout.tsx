@@ -50,7 +50,8 @@ export default function RootLayout() {
   });
 
   // setup biometric/login
-  const [authenticated, setAuthenticated] = useState(true);
+  // TODO: need to figure out how to make this an environment variable. It's a pain to constantly have to authenticate during local development
+  const [authenticated, setAuthenticated] = useState(false);
   const authenticate = async () => {
     // const hasHardware = await LocalAuthentication.hasHardwareAsync();
     // const isEnrolled = await LocalAuthentication.isEnrolledAsync();
@@ -67,7 +68,6 @@ export default function RootLayout() {
   };
 
   useEffect(() => {
-    // TODO: need to figure out how to make this an environment variable. It's a pain to constantly have to authenticate during local development
     if (!authenticated) {
       authenticate();
     }
