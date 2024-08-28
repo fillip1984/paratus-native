@@ -1,5 +1,6 @@
 import Entypo from "@expo/vector-icons/Entypo";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { FlashList } from "@shopify/flash-list";
 import classNames from "classnames";
 import {
   addWeeks,
@@ -384,99 +385,122 @@ const Timeline = ({
   ) => Promise<void>;
   selectedDate: Date;
 }) => {
-  const agendaScrollViewRef = useRef<ScrollView>(null);
-  const [dayCoordinates, setDayCoordinates] = useState<
-    { date: Date; y: number }[]
-  >([]);
+  const agendaScrollViewRef = useRef<FlashList<TimelineEntry>>(null);
+
+  const todayIndex = timeline.findIndex(
+    (t) => t.type === "header" && isSameDay(t.date, new Date()),
+  );
 
   useEffect(() => {
-    const coordinate = dayCoordinates.find((c) =>
-      isSameDay(c.date, selectedDate),
+    const item = timeline.find(
+      (t) => t.type === "header" && isSameDay(t.date, selectedDate),
     );
-    if (coordinate) {
-      agendaScrollViewRef.current?.scrollTo({
-        x: 0,
-        y: coordinate.y,
-        animated: true,
-      });
+    if (item) {
+      agendaScrollViewRef.current?.scrollToItem({ item, animated: true });
     }
-  }, [selectedDate, dayCoordinates]);
+  }, [selectedDate, timeline]);
 
   return (
     <View className="flex-1">
       <GestureHandlerRootView>
-        <ScrollView stickyHeaderIndices={headers} ref={agendaScrollViewRef}>
-          {timeline.map((timelineEntry) => {
-            if (timelineEntry.type === "header") {
-              return (
-                <View
-                  onLayout={(e) => {
-                    const layout = e.nativeEvent.layout;
-                    setDayCoordinates((prev) => [
-                      ...prev,
-                      { date: timelineEntry.date, y: layout.y },
-                    ]);
-                  }}
-                  key={timelineEntry.date.toISOString() + timelineEntry.type}
-                  className="bg-black">
-                  <Text className="py-2 text-xl font-bold text-white">
-                    {format(timelineEntry.date, "MMM dd")}{" "}
-                    <Entypo name="dot-single" size={24} color="white" />
-                    {isYesterday(timelineEntry.date) ? (
-                      <>
-                        Yesterday
-                        <Entypo name="dot-single" size={24} color="white" />
-                      </>
-                    ) : (
-                      ""
-                    )}
-                    {isToday(timelineEntry.date) ? (
-                      <>
-                        Today
-                        <Entypo name="dot-single" size={24} color="white" />
-                      </>
-                    ) : (
-                      ""
-                    )}
-                    {isTomorrow(timelineEntry.date) ? (
-                      <>
-                        Tomorrow
-                        <Entypo name="dot-single" size={24} color="white" />
-                      </>
-                    ) : (
-                      ""
-                    )}
-                    {format(timelineEntry.date, "EEEE")}
-                  </Text>
-                </View>
-              );
-            } else if (
-              timelineEntry.type === "activity" &&
-              timelineEntry.activity
-            ) {
-              return (
-                <TimelineCard
-                  key={timelineEntry.activity.id}
-                  activity={timelineEntry.activity}
-                  handleCompleteOrSkip={handleCompleteOrSkip}
-                />
-              );
-            } else if (
-              (timelineEntry.type === "sunrise" ||
-                timelineEntry.type === "sunset") &&
-              timelineEntry.sunInfo
-            ) {
-              return (
-                <NatureCard
-                  key={timelineEntry.date.toISOString() + timelineEntry.type}
-                  nature={timelineEntry.sunInfo}
-                  type={timelineEntry.type}
-                />
-              );
-            }
-          })}
-        </ScrollView>
+        {todayIndex !== -1 && (
+          <FlashList
+            data={timeline}
+            estimatedItemSize={94.6}
+            renderItem={({ item }) => (
+              <TimelineCardF
+                timelineEntry={item}
+                handleCompleteOrSkip={handleCompleteOrSkip}
+              />
+            )}
+            ref={agendaScrollViewRef}
+            initialScrollIndex={todayIndex}
+            stickyHeaderHiddenOnScroll
+            stickyHeaderIndices={headers}
+          />
+        )}
       </GestureHandlerRootView>
     </View>
   );
+};
+
+const TimelineCardF = ({
+  timelineEntry,
+  handleCompleteOrSkip,
+}: {
+  timelineEntry: TimelineEntry;
+  handleCompleteOrSkip: (
+    activity: ActivityWithPartialRoutine,
+    action: "Complete" | "Skip",
+  ) => Promise<void>;
+}) => {
+  if (timelineEntry.type === "header") {
+    return (
+      <View
+        // onLayout={(e) => {
+        //   const layout = e.nativeEvent.layout;
+        //   setDayCoordinates((prev) => [
+        //     ...prev,
+        //     { date: timelineEntry.date, y: layout.y },
+        //   ]);
+        // }}
+        // key={timelineEntry.date.toISOString() + timelineEntry.type}
+        className="bg-black">
+        <Text className="py-2 text-xl font-bold text-white">
+          {format(timelineEntry.date, "MMM dd")}{" "}
+          <Entypo name="dot-single" size={24} color="white" />
+          {isYesterday(timelineEntry.date) ? (
+            <>
+              Yesterday
+              <Entypo name="dot-single" size={24} color="white" />
+            </>
+          ) : (
+            ""
+          )}
+          {isToday(timelineEntry.date) ? (
+            <>
+              Today
+              <Entypo name="dot-single" size={24} color="white" />
+            </>
+          ) : (
+            ""
+          )}
+          {isTomorrow(timelineEntry.date) ? (
+            <>
+              Tomorrow
+              <Entypo name="dot-single" size={24} color="white" />
+            </>
+          ) : (
+            ""
+          )}
+          {format(timelineEntry.date, "EEEE")}
+        </Text>
+      </View>
+    );
+  } else if (timelineEntry.type === "activity" && timelineEntry.activity) {
+    return (
+      <TimelineCard
+        // key={timelineEntry.activity.id}
+        activity={timelineEntry.activity}
+        handleCompleteOrSkip={handleCompleteOrSkip}
+      />
+    );
+  } else if (
+    (timelineEntry.type === "sunrise" || timelineEntry.type === "sunset") &&
+    timelineEntry.sunInfo
+  ) {
+    return (
+      <NatureCard
+        // key={timelineEntry.date.toISOString() + timelineEntry.type}
+        nature={timelineEntry.sunInfo}
+        type={timelineEntry.type}
+      />
+    );
+  } else {
+    return (
+      <View>
+        <Text className="font-bold text-white">Unknown timeline entry</Text>
+      </View>
+    );
+  }
 };

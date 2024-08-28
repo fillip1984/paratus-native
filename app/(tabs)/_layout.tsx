@@ -39,6 +39,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="planner2"
+        options={{
+          title: "Planner2",
+          tabBarIcon: ({ color }) => (
+            <AntDesign name="carryout" size={24} color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
