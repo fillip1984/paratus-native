@@ -47,7 +47,14 @@ import {
 import fetchSunInfo, { SunInfo } from "@/stores/sunInfoStore";
 
 interface TimelineEntry {
-  type: "sunrise" | "sunset" | "nature" | "todo" | "activity" | "header";
+  type:
+    | "sunrise"
+    | "sunset"
+    | "nature"
+    | "todo"
+    | "activity"
+    | "header"
+    | "spacer";
   date: Date;
   activity?: ActivityWithPartialRoutine;
   sunInfo?: SunInfo;
@@ -62,7 +69,7 @@ export default function Home() {
   const nextWeek = interval(addWeeks(sunday, 1), addWeeks(saturday, 1));
 
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [agendaDate, setAgendaDate] = useState<Date>(new Date());
+  const [jumpToDate, setJumpToDate] = useState<Date | null>(null);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [headers, setHeaders] = useState<number[]>([]);
 
@@ -125,6 +132,12 @@ export default function Home() {
         newTimeline.push({ type: "sunset", date: d, sunInfo });
       }
     }
+    newTimeline.push({ type: "spacer", date: nextWeek.end });
+    newTimeline.push({ type: "spacer", date: nextWeek.end });
+    newTimeline.push({ type: "spacer", date: nextWeek.end });
+    newTimeline.push({ type: "spacer", date: nextWeek.end });
+    newTimeline.push({ type: "spacer", date: nextWeek.end });
+    newTimeline.push({ type: "spacer", date: nextWeek.end });
 
     setTimeline(newTimeline);
     setHeaders(
@@ -224,8 +237,7 @@ export default function Home() {
         <Header
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
-          agendaDate={agendaDate}
-          setAgendaDate={setAgendaDate}
+          setJumpToDate={setJumpToDate}
           lastWeek={lastWeek}
           thisWeek={thisWeek}
           nextWeek={nextWeek}
@@ -235,9 +247,9 @@ export default function Home() {
           timeline={timeline}
           headers={headers}
           handleCompleteOrSkip={handleCompleteOrSkip}
-          selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
-          setAgendaDate={setAgendaDate}
+          jumpToDate={jumpToDate}
+          setJumpToDate={setJumpToDate}
         />
       </View>
     </SafeAreaView>
@@ -247,8 +259,7 @@ export default function Home() {
 const Header = ({
   selectedDate,
   setSelectedDate,
-  agendaDate,
-  setAgendaDate,
+  setJumpToDate,
   lastWeek,
   thisWeek,
   nextWeek,
@@ -256,8 +267,7 @@ const Header = ({
 }: {
   selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
-  agendaDate: Date;
-  setAgendaDate: Dispatch<SetStateAction<Date>>;
+  setJumpToDate: Dispatch<SetStateAction<Date | null>>;
   lastWeek: Interval;
   thisWeek: Interval;
   nextWeek: Interval;
@@ -269,20 +279,12 @@ const Header = ({
     const item = [lastWeek, thisWeek, nextWeek].find((w) =>
       isWithinInterval(selectedDate, w),
     );
-    const item2 = [lastWeek, thisWeek, nextWeek].find((w) =>
-      isWithinInterval(agendaDate, w),
-    );
 
-    // if (item2 && item !== item2) {
-    // scrollViewRef.current?.scrollToItem({ item, animated: true });
-    // scrollViewRef.current?.scrollToItem({ item: item2, animated: true });
-    // } else if (item) {
     scrollViewRef.current?.scrollToItem({ item, animated: true });
-    // }
-  }, [selectedDate, agendaDate, lastWeek, thisWeek, nextWeek]);
+  }, [selectedDate, lastWeek, thisWeek, nextWeek]);
 
   return (
-    <View>
+    <>
       <View className="mb-2 flex flex-row items-center justify-between">
         <View className="flex flex-row items-center gap-2">
           <Text className="text-xl text-white">
@@ -290,7 +292,8 @@ const Header = ({
           </Text>
           <Pressable
             onPress={() => {
-              setSelectedDate(today);
+              // setSelectedDate(today);
+              setJumpToDate(today);
             }}
             className="relative">
             <Ionicons name="calendar-clear-outline" size={32} color="#ef4444" />
@@ -310,8 +313,7 @@ const Header = ({
               week={item}
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
-              agendaDate={agendaDate}
-              setAgendaDate={setAgendaDate}
+              setJumpToDate={setJumpToDate}
             />
           )}
           estimatedItemSize={334}
@@ -320,25 +322,22 @@ const Header = ({
           ref={scrollViewRef}
         />
       </View>
-    </View>
+    </>
   );
 };
 
 const Week = ({
   week,
   selectedDate,
-  setSelectedDate,
-  agendaDate,
-  setAgendaDate,
+  setJumpToDate,
 }: {
   week: Interval;
   selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
-  agendaDate: Date;
-  setAgendaDate: Dispatch<SetStateAction<Date>>;
+  setJumpToDate: Dispatch<SetStateAction<Date | null>>;
 }) => {
   const isSelected = (d: Date) => {
-    return isSameDay(d, agendaDate);
+    return isSameDay(d, selectedDate);
   };
 
   return (
@@ -348,13 +347,11 @@ const Week = ({
           <Text className="text-white">{format(d, "E")}</Text>
           <Pressable
             onPress={() => {
-              setSelectedDate(d);
-              setAgendaDate(d);
+              setJumpToDate(d);
             }}
             className={classNames({
               "flex h-10 w-10 items-center justify-center rounded-full bg-red-500":
-                // isSameDay(selectedDate, d) &&
-                isSameDay(agendaDate, d),
+                isSameDay(selectedDate, d),
               "flex h-10 w-10 items-center justify-center": true,
             })}>
             <Text
@@ -376,7 +373,7 @@ const Avatar = () => {
   return (
     <Link href="/(modals)/preferences" asChild>
       <Pressable className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-400">
-        <Text>PH</Text>
+        <Text>PW</Text>
       </Pressable>
     </Link>
   );
@@ -386,9 +383,9 @@ const Timeline = ({
   timeline,
   headers,
   handleCompleteOrSkip,
-  selectedDate,
   setSelectedDate,
-  setAgendaDate,
+  jumpToDate,
+  setJumpToDate,
 }: {
   timeline: TimelineEntry[];
   headers: number[];
@@ -396,9 +393,9 @@ const Timeline = ({
     activity: ActivityWithPartialRoutine,
     action: "Complete" | "Skip",
   ) => Promise<void>;
-  selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
-  setAgendaDate: Dispatch<SetStateAction<Date>>;
+  jumpToDate: Date | null;
+  setJumpToDate: Dispatch<SetStateAction<Date | null>>;
 }) => {
   const agendaScrollViewRef = useRef<FlashList<TimelineEntry>>(null);
 
@@ -406,27 +403,27 @@ const Timeline = ({
     (t) => t.type === "header" && isSameDay(t.date, new Date()),
   );
 
-  // TODO: Not perfect, either we need to introduce a debouncer here or go back to having 1 variable to indicate selected date and have explicit scroll to happen what that's a hell of a lot of reverse prop drilling though it's probably the best option
   const viewableItemsHandler = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems[0]) {
         const visibleDate = (viewableItems[0].item as TimelineEntry).date;
-        console.log("setting agenda date: " + visibleDate);
-        setAgendaDate(visibleDate);
+        setSelectedDate(visibleDate);
       }
     },
-    [setAgendaDate],
+    [setSelectedDate],
   );
 
   useEffect(() => {
-    const item = timeline.find(
-      (t) => t.type === "header" && isSameDay(t.date, selectedDate),
-    );
-    if (item !== undefined) {
-      console.log("Scrolling to selected date: " + selectedDate);
-      agendaScrollViewRef.current?.scrollToItem({ item, animated: true });
+    if (jumpToDate) {
+      const item = timeline.find(
+        (t) => t.type === "header" && isSameDay(t.date, jumpToDate),
+      );
+      setJumpToDate(null);
+      if (item !== undefined) {
+        agendaScrollViewRef.current?.scrollToItem({ item, animated: true });
+      }
     }
-  }, [selectedDate, timeline]);
+  }, [jumpToDate, setJumpToDate, timeline]);
 
   return (
     <View className="flex-1">
@@ -436,7 +433,7 @@ const Timeline = ({
             data={timeline}
             estimatedItemSize={94.6}
             initialScrollIndex={todayIndex}
-            renderItem={({ item }) => (
+            renderItem={({ item, index }) => (
               <TimelineCardResolver
                 timelineEntry={item}
                 handleCompleteOrSkip={handleCompleteOrSkip}
@@ -467,16 +464,7 @@ const TimelineCardResolver = ({
 }) => {
   if (timelineEntry.type === "header") {
     return (
-      <View
-        // onLayout={(e) => {
-        //   const layout = e.nativeEvent.layout;
-        //   setDayCoordinates((prev) => [
-        //     ...prev,
-        //     { date: timelineEntry.date, y: layout.y },
-        //   ]);
-        // }}
-        // key={timelineEntry.date.toISOString() + timelineEntry.type}
-        className="bg-black">
+      <View className="bg-black">
         <Text className="py-2 text-xl font-bold text-white">
           {format(timelineEntry.date, "MMM dd")}{" "}
           <Entypo name="dot-single" size={24} color="white" />
@@ -511,7 +499,6 @@ const TimelineCardResolver = ({
   } else if (timelineEntry.type === "activity" && timelineEntry.activity) {
     return (
       <TimelineCard
-        // key={timelineEntry.activity.id}
         activity={timelineEntry.activity}
         handleCompleteOrSkip={handleCompleteOrSkip}
       />
@@ -521,16 +508,16 @@ const TimelineCardResolver = ({
     timelineEntry.sunInfo
   ) {
     return (
-      <NatureCard
-        // key={timelineEntry.date.toISOString() + timelineEntry.type}
-        nature={timelineEntry.sunInfo}
-        type={timelineEntry.type}
-      />
+      <NatureCard nature={timelineEntry.sunInfo} type={timelineEntry.type} />
     );
+  } else if (timelineEntry.type === "spacer") {
+    return <View className="h-24" />;
   } else {
     return (
-      <View>
-        <Text className="font-bold text-white">Unknown timeline entry</Text>
+      <View className="h-24">
+        <Text className="text-2xl font-bold text-red-400">
+          Unknown timeline entry type: {timelineEntry.type}
+        </Text>
       </View>
     );
   }
