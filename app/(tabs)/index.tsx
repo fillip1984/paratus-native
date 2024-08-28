@@ -1,6 +1,6 @@
 import Entypo from "@expo/vector-icons/Entypo";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, ViewToken } from "@shopify/flash-list";
 import classNames from "classnames";
 import {
   addWeeks,
@@ -15,6 +15,7 @@ import {
   isSameDay,
   isToday,
   isTomorrow,
+  isWithinInterval,
   isYesterday,
   startOfDay,
   startOfWeek,
@@ -30,7 +31,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { Pressable, SafeAreaView, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { NatureCard } from "../_components/NatureCard";
@@ -61,6 +62,7 @@ export default function Home() {
   const nextWeek = interval(addWeeks(sunday, 1), addWeeks(saturday, 1));
 
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [agendaDate, setAgendaDate] = useState<Date>(new Date());
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [headers, setHeaders] = useState<number[]>([]);
 
@@ -222,6 +224,8 @@ export default function Home() {
         <Header
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
+          agendaDate={agendaDate}
+          setAgendaDate={setAgendaDate}
           lastWeek={lastWeek}
           thisWeek={thisWeek}
           nextWeek={nextWeek}
@@ -232,6 +236,8 @@ export default function Home() {
           headers={headers}
           handleCompleteOrSkip={handleCompleteOrSkip}
           selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          setAgendaDate={setAgendaDate}
         />
       </View>
     </SafeAreaView>
@@ -241,6 +247,8 @@ export default function Home() {
 const Header = ({
   selectedDate,
   setSelectedDate,
+  agendaDate,
+  setAgendaDate,
   lastWeek,
   thisWeek,
   nextWeek,
@@ -248,20 +256,30 @@ const Header = ({
 }: {
   selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
+  agendaDate: Date;
+  setAgendaDate: Dispatch<SetStateAction<Date>>;
   lastWeek: Interval;
   thisWeek: Interval;
   nextWeek: Interval;
   today: Date;
 }) => {
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [coordinates, setCoordinates] = useState(0);
+  const scrollViewRef = useRef<FlashList<Interval<Date>>>(null);
 
   useEffect(() => {
-    scrollViewRef.current?.scrollTo({
-      x: coordinates,
-      y: 0,
-    });
-  }, [coordinates]);
+    const item = [lastWeek, thisWeek, nextWeek].find((w) =>
+      isWithinInterval(selectedDate, w),
+    );
+    const item2 = [lastWeek, thisWeek, nextWeek].find((w) =>
+      isWithinInterval(agendaDate, w),
+    );
+
+    // if (item2 && item !== item2) {
+    // scrollViewRef.current?.scrollToItem({ item, animated: true });
+    // scrollViewRef.current?.scrollToItem({ item: item2, animated: true });
+    // } else if (item) {
+    scrollViewRef.current?.scrollToItem({ item, animated: true });
+    // }
+  }, [selectedDate, agendaDate, lastWeek, thisWeek, nextWeek]);
 
   return (
     <View>
@@ -273,11 +291,6 @@ const Header = ({
           <Pressable
             onPress={() => {
               setSelectedDate(today);
-              scrollViewRef.current?.scrollTo({
-                x: coordinates,
-                y: 0,
-                animated: true,
-              });
             }}
             className="relative">
             <Ionicons name="calendar-clear-outline" size={32} color="#ef4444" />
@@ -288,35 +301,25 @@ const Header = ({
         </View>
         <Avatar />
       </View>
-      <ScrollView
-        ref={scrollViewRef}
-        pagingEnabled
-        horizontal
-        showsHorizontalScrollIndicator={false}>
-        <View className="flex flex-row flex-nowrap overflow-hidden">
-          <Week
-            week={lastWeek}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-          <View
-            onLayout={(e) => {
-              const layout = e.nativeEvent.layout;
-              setCoordinates(layout.x);
-            }}>
+
+      <View className="h-24">
+        <FlashList
+          data={[lastWeek, thisWeek, nextWeek]}
+          renderItem={({ item }) => (
             <Week
-              week={thisWeek}
+              week={item}
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
+              agendaDate={agendaDate}
+              setAgendaDate={setAgendaDate}
             />
-          </View>
-          <Week
-            week={nextWeek}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-          />
-        </View>
-      </ScrollView>
+          )}
+          estimatedItemSize={334}
+          horizontal
+          pagingEnabled
+          ref={scrollViewRef}
+        />
+      </View>
     </View>
   );
 };
@@ -325,13 +328,17 @@ const Week = ({
   week,
   selectedDate,
   setSelectedDate,
+  agendaDate,
+  setAgendaDate,
 }: {
   week: Interval;
   selectedDate: Date;
   setSelectedDate: Dispatch<SetStateAction<Date>>;
+  agendaDate: Date;
+  setAgendaDate: Dispatch<SetStateAction<Date>>;
 }) => {
   const isSelected = (d: Date) => {
-    return isSameDay(d, selectedDate);
+    return isSameDay(d, agendaDate);
   };
 
   return (
@@ -340,10 +347,14 @@ const Week = ({
         <View key={d.getDate()} className="flex flex-1 items-center gap-4">
           <Text className="text-white">{format(d, "E")}</Text>
           <Pressable
-            onPress={() => setSelectedDate(d)}
+            onPress={() => {
+              setSelectedDate(d);
+              setAgendaDate(d);
+            }}
             className={classNames({
               "flex h-10 w-10 items-center justify-center rounded-full bg-red-500":
-                isSameDay(selectedDate, d),
+                // isSameDay(selectedDate, d) &&
+                isSameDay(agendaDate, d),
               "flex h-10 w-10 items-center justify-center": true,
             })}>
             <Text
@@ -376,6 +387,8 @@ const Timeline = ({
   headers,
   handleCompleteOrSkip,
   selectedDate,
+  setSelectedDate,
+  setAgendaDate,
 }: {
   timeline: TimelineEntry[];
   headers: number[];
@@ -384,6 +397,8 @@ const Timeline = ({
     action: "Complete" | "Skip",
   ) => Promise<void>;
   selectedDate: Date;
+  setSelectedDate: Dispatch<SetStateAction<Date>>;
+  setAgendaDate: Dispatch<SetStateAction<Date>>;
 }) => {
   const agendaScrollViewRef = useRef<FlashList<TimelineEntry>>(null);
 
@@ -391,11 +406,24 @@ const Timeline = ({
     (t) => t.type === "header" && isSameDay(t.date, new Date()),
   );
 
+  // TODO: Not perfect, either we need to introduce a debouncer here or go back to having 1 variable to indicate selected date and have explicit scroll to happen what that's a hell of a lot of reverse prop drilling though it's probably the best option
+  const viewableItemsHandler = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems[0]) {
+        const visibleDate = (viewableItems[0].item as TimelineEntry).date;
+        console.log("setting agenda date: " + visibleDate);
+        setAgendaDate(visibleDate);
+      }
+    },
+    [setAgendaDate],
+  );
+
   useEffect(() => {
     const item = timeline.find(
       (t) => t.type === "header" && isSameDay(t.date, selectedDate),
     );
-    if (item) {
+    if (item !== undefined) {
+      console.log("Scrolling to selected date: " + selectedDate);
       agendaScrollViewRef.current?.scrollToItem({ item, animated: true });
     }
   }, [selectedDate, timeline]);
@@ -407,16 +435,19 @@ const Timeline = ({
           <FlashList
             data={timeline}
             estimatedItemSize={94.6}
+            initialScrollIndex={todayIndex}
             renderItem={({ item }) => (
-              <TimelineCardF
+              <TimelineCardResolver
                 timelineEntry={item}
                 handleCompleteOrSkip={handleCompleteOrSkip}
               />
             )}
             ref={agendaScrollViewRef}
-            initialScrollIndex={todayIndex}
             stickyHeaderHiddenOnScroll
             stickyHeaderIndices={headers}
+            // See: https://stackoverflow.com/questions/45868284/how-to-get-currently-visible-index-in-rn-flat-list
+            onViewableItemsChanged={viewableItemsHandler}
+            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
           />
         )}
       </GestureHandlerRootView>
@@ -424,7 +455,7 @@ const Timeline = ({
   );
 };
 
-const TimelineCardF = ({
+const TimelineCardResolver = ({
   timelineEntry,
   handleCompleteOrSkip,
 }: {
