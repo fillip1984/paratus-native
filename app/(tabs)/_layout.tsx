@@ -1,5 +1,6 @@
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router";
 export default function TabLayout() {
   return (
@@ -17,7 +18,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="home-sharp" size={24} color={color} />
+            <FontAwesome6 name="timeline" size={24} color={color} />
           ),
         }}
       />
@@ -40,11 +41,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="planner2"
+        name="projects"
         options={{
-          title: "Planner2",
+          title: "Projects",
           tabBarIcon: ({ color }) => (
-            <AntDesign name="carryout" size={24} color={color} />
+            <MaterialCommunityIcons name="floor-plan" size={24} color={color} />
           ),
         }}
       />

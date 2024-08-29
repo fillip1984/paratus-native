@@ -8,7 +8,7 @@ interface Area {
   icon?: React.ReactElement;
 }
 
-export default function PlannerScreen() {
+export default function ProjectScreen() {
   const [areas, setAreas] = useState<Area[]>([
     {
       name: "Inbox",
