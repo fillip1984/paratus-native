@@ -321,7 +321,7 @@ const Header = ({
 
   return (
     <>
-      <View className="mb-2 flex flex-row items-center justify-between">
+      <View className="flex flex-row items-center justify-between">
         <View className="flex flex-row items-center gap-2">
           <Text className="text-xl text-white">
             {format(selectedDate, "MMM yyyy")} &gt;
@@ -510,8 +510,8 @@ const TimelineCardResolver = ({
 }) => {
   if (timelineEntry.type === "header") {
     return (
-      <View className="bg-black">
-        <Text className="py-2 text-xl font-bold text-white">
+      <View className="flex h-20 justify-center border-t border-t-white bg-black">
+        <Text className="text-2xl font-bold text-white">
           {format(timelineEntry.date, "MMM dd")}{" "}
           <Entypo name="dot-single" size={24} color="white" />
           {isYesterday(timelineEntry.date) ? (
@@ -544,23 +544,27 @@ const TimelineCardResolver = ({
     );
   } else if (timelineEntry.type === "activity" && timelineEntry.activity) {
     return (
-      <TimelineCard
-        activity={timelineEntry.activity}
-        handleCompleteOrSkip={handleCompleteOrSkip}
-      />
+      <View className="my-2 h-24">
+        <TimelineCard
+          activity={timelineEntry.activity}
+          handleCompleteOrSkip={handleCompleteOrSkip}
+        />
+      </View>
     );
   } else if (
     (timelineEntry.type === "sunrise" || timelineEntry.type === "sunset") &&
     timelineEntry.sunInfo
   ) {
     return (
-      <NatureCard nature={timelineEntry.sunInfo} type={timelineEntry.type} />
+      <View className="my-2 h-24">
+        <NatureCard nature={timelineEntry.sunInfo} type={timelineEntry.type} />
+      </View>
     );
   } else if (timelineEntry.type === "spacer") {
-    return <View className="h-24" />;
+    return <View className="my-2 h-24 bg-black" />;
   } else {
     return (
-      <View className="h-24">
+      <View className="my-2 h-24">
         <Text className="text-2xl font-bold text-red-400">
           Unknown timeline entry type: {timelineEntry.type}
         </Text>
