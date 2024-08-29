@@ -3,6 +3,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { FlashList, ViewToken } from "@shopify/flash-list";
 import classNames from "classnames";
 import {
+  addDays,
   addWeeks,
   eachDayOfInterval,
   endOfDay,
@@ -10,6 +11,7 @@ import {
   format,
   Interval,
   interval,
+  isBefore,
   isFuture,
   isPast,
   isSameDay,
@@ -276,7 +278,11 @@ const Header = ({
 }) => {
   const scrollViewRef = useRef<FlashList<Interval<Date>>>(null);
 
+  const [isCalendarPaged, setIsCalendarPaged] = useState(false);
+  const [activeWeek, setActiveWeek] = useState<Interval<Date>>();
+
   useEffect(() => {
+    console.log({ msg: "header version", selectedDate });
     const item = [lastWeek, thisWeek, nextWeek].find((w) =>
       isWithinInterval(selectedDate, w),
     );
@@ -284,40 +290,36 @@ const Header = ({
     scrollViewRef.current?.scrollToItem({ item, animated: true });
   }, [selectedDate, lastWeek, thisWeek, nextWeek]);
 
-  // const viewableItemsHandler = useCallback(
-  //   ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-  //     if (viewableItems[0]) {
-  //       const week = viewableItems[0].item as Interval<Date>;
+  useEffect(() => {
+    console.log({ msg: "header version2", selectedDate, activeWeek });
+    if (!activeWeek) {
+      return;
+    }
 
-  //       if (!isWithinInterval(selectedDate, week)) {
-  //         if (isBefore(week.end, selectedDate)) {
-  //           const newSelectedDate = addDays(selectedDate, -7);
-  //           console.log({
-  //             msg: "is before",
-  //             week,
-  //             selectedDate,
-  //             newSelectedDate,
-  //           });
-  //           setSelectedDate(newSelectedDate);
-  //           setJumpToDate(newSelectedDate);
-  //         } else {
-  //           const newSelectedDate = addDays(selectedDate, 7);
-  //           console.log({
-  //             msg: "is after",
-  //             week,
-  //             selectedDate,
-  //             newSelectedDate,
-  //           });
-  //           setSelectedDate(newSelectedDate);
-  //           setJumpToDate(newSelectedDate);
-  //         }
-  //       } else {
-  //         console.log({ msg: "is within", selectedDate });
-  //       }
-  //     }
-  //   },
-  //   [setSelectedDate, setJumpToDate, selectedDate],
-  // );
+    if (!isWithinInterval(selectedDate, activeWeek)) {
+      if (isBefore(selectedDate, activeWeek.start)) {
+        console.log("before");
+        const newDate = addDays(selectedDate, 7);
+        setSelectedDate(newDate);
+        setJumpToDate(newDate);
+      } else {
+        console.log("after");
+        const newDate = addDays(selectedDate, -7);
+        setSelectedDate(newDate);
+        setJumpToDate(newDate);
+      }
+    }
+  }, [activeWeek]);
+
+  const viewableItemsHandler = useDebounceCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems[0]) {
+        const week = viewableItems[0].item as Interval<Date>;
+        setActiveWeek(week);
+      }
+    },
+    100,
+  );
 
   return (
     <>
@@ -328,6 +330,10 @@ const Header = ({
           </Text>
           <Pressable
             onPress={() => {
+              console.log(
+                "user clicked on Today calendar UI, updating selected date: " +
+                  today,
+              );
               setSelectedDate(today);
               setJumpToDate(today);
             }}
@@ -358,8 +364,8 @@ const Header = ({
           ref={scrollViewRef}
           showsHorizontalScrollIndicator={false}
           // See: https://stackoverflow.com/questions/45868284/how-to-get-currently-visible-index-in-rn-flat-list
-          // onViewableItemsChanged={viewableItemsHandler}
-          // viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+          onViewableItemsChanged={viewableItemsHandler}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
         />
       </View>
     </>
@@ -388,12 +394,16 @@ const Week = ({
           <Text className="text-white">{format(d, "E")}</Text>
           <Pressable
             onPress={() => {
+              console.log(
+                "user clicked on day in calendar UI, updating selected date: " +
+                  d,
+              );
               setSelectedDate(d);
               setJumpToDate(d);
             }}
             className={classNames({
               "flex h-10 w-10 items-center justify-center rounded-full bg-red-500":
-                isSameDay(selectedDate, d),
+                isSelected(d),
               "flex h-10 w-10 items-center justify-center": true,
             })}>
             <Text
@@ -456,7 +466,7 @@ const Timeline = ({
         setSelectedDate(visibleDate);
       }
     },
-    300,
+    100,
   );
 
   useEffect(() => {
@@ -490,7 +500,7 @@ const Timeline = ({
             stickyHeaderIndices={headers}
             // See: https://stackoverflow.com/questions/45868284/how-to-get-currently-visible-index-in-rn-flat-list
             onViewableItemsChanged={viewableItemsHandler}
-            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+            viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
           />
         )}
       </GestureHandlerRootView>
