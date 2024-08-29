@@ -3,7 +3,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { FlashList, ViewToken } from "@shopify/flash-list";
 import classNames from "classnames";
 import {
-  addDays,
   addWeeks,
   eachDayOfInterval,
   endOfDay,
@@ -11,7 +10,6 @@ import {
   format,
   Interval,
   interval,
-  isBefore,
   isFuture,
   isPast,
   isSameDay,
@@ -35,6 +33,7 @@ import {
 } from "react";
 import { Pressable, SafeAreaView, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useDebounceCallback } from "usehooks-ts";
 
 import { NatureCard } from "../_components/NatureCard";
 import TimelineCard from "../_components/TimelineCard";
@@ -285,40 +284,40 @@ const Header = ({
     scrollViewRef.current?.scrollToItem({ item, animated: true });
   }, [selectedDate, lastWeek, thisWeek, nextWeek]);
 
-  const viewableItemsHandler = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems[0]) {
-        const week = viewableItems[0].item as Interval<Date>;
+  // const viewableItemsHandler = useCallback(
+  //   ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  //     if (viewableItems[0]) {
+  //       const week = viewableItems[0].item as Interval<Date>;
 
-        if (!isWithinInterval(selectedDate, week)) {
-          if (isBefore(week.end, selectedDate)) {
-            const newSelectedDate = addDays(selectedDate, -7);
-            console.log({
-              msg: "is before",
-              week,
-              selectedDate,
-              newSelectedDate,
-            });
-            setSelectedDate(newSelectedDate);
-            setJumpToDate(newSelectedDate);
-          } else {
-            const newSelectedDate = addDays(selectedDate, 7);
-            console.log({
-              msg: "is after",
-              week,
-              selectedDate,
-              newSelectedDate,
-            });
-            setSelectedDate(newSelectedDate);
-            setJumpToDate(newSelectedDate);
-          }
-        } else {
-          console.log({ msg: "is within", selectedDate });
-        }
-      }
-    },
-    [setSelectedDate, setJumpToDate, selectedDate],
-  );
+  //       if (!isWithinInterval(selectedDate, week)) {
+  //         if (isBefore(week.end, selectedDate)) {
+  //           const newSelectedDate = addDays(selectedDate, -7);
+  //           console.log({
+  //             msg: "is before",
+  //             week,
+  //             selectedDate,
+  //             newSelectedDate,
+  //           });
+  //           setSelectedDate(newSelectedDate);
+  //           setJumpToDate(newSelectedDate);
+  //         } else {
+  //           const newSelectedDate = addDays(selectedDate, 7);
+  //           console.log({
+  //             msg: "is after",
+  //             week,
+  //             selectedDate,
+  //             newSelectedDate,
+  //           });
+  //           setSelectedDate(newSelectedDate);
+  //           setJumpToDate(newSelectedDate);
+  //         }
+  //       } else {
+  //         console.log({ msg: "is within", selectedDate });
+  //       }
+  //     }
+  //   },
+  //   [setSelectedDate, setJumpToDate, selectedDate],
+  // );
 
   return (
     <>
@@ -359,8 +358,8 @@ const Header = ({
           ref={scrollViewRef}
           showsHorizontalScrollIndicator={false}
           // See: https://stackoverflow.com/questions/45868284/how-to-get-currently-visible-index-in-rn-flat-list
-          onViewableItemsChanged={viewableItemsHandler}
-          viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+          // onViewableItemsChanged={viewableItemsHandler}
+          // viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
         />
       </View>
     </>
@@ -446,14 +445,18 @@ const Timeline = ({
     (t) => t.type === "header" && isSameDay(t.date, new Date()),
   );
 
-  const viewableItemsHandler = useCallback(
+  const viewableItemsHandler = useDebounceCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems[0]) {
         const visibleDate = (viewableItems[0].item as TimelineEntry).date;
+        console.log(
+          "updating selected date so that calendar UI reflects current day: " +
+            visibleDate,
+        );
         setSelectedDate(visibleDate);
       }
     },
-    [],
+    300,
   );
 
   useEffect(() => {
