@@ -31,7 +31,7 @@ export function NatureCard({
         </Text>
         <View className="flex flex-row items-center gap-1">
           <Feather name="clock" size={20} color="black" />
-          <Text className="text-xl text-black">{`${type === "sunrise" ? format(nature.sunrise, h_mm_ampm) : format(nature.sunset, h_mm_ampm)}`}</Text>
+          <Text className="text-xl text-black">{`${type === "sunrise" ? format(nature.dawn, h_mm_ampm) : format(nature.dusk, h_mm_ampm)}`}</Text>
         </View>
       </View>
     </View>
