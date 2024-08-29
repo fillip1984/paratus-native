@@ -3,6 +3,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { FlashList, ViewToken } from "@shopify/flash-list";
 import classNames from "classnames";
 import {
+  addDays,
   addWeeks,
   eachDayOfInterval,
   endOfDay,
@@ -10,6 +11,7 @@ import {
   format,
   Interval,
   interval,
+  isBefore,
   isFuture,
   isPast,
   isSameDay,
@@ -61,14 +63,14 @@ interface TimelineEntry {
 }
 
 export default function Home() {
-  const today = new Date();
+  const today = startOfDay(new Date());
   const sunday = startOfWeek(today);
   const saturday = endOfWeek(today);
   const thisWeek = interval(sunday, saturday);
   const lastWeek = interval(addWeeks(sunday, -1), addWeeks(saturday, -1));
   const nextWeek = interval(addWeeks(sunday, 1), addWeeks(saturday, 1));
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(today);
   const [jumpToDate, setJumpToDate] = useState<Date | null>(null);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [headers, setHeaders] = useState<number[]>([]);
@@ -283,6 +285,41 @@ const Header = ({
     scrollViewRef.current?.scrollToItem({ item, animated: true });
   }, [selectedDate, lastWeek, thisWeek, nextWeek]);
 
+  const viewableItemsHandler = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems[0]) {
+        const week = viewableItems[0].item as Interval<Date>;
+
+        if (!isWithinInterval(selectedDate, week)) {
+          if (isBefore(week.end, selectedDate)) {
+            const newSelectedDate = addDays(selectedDate, -7);
+            console.log({
+              msg: "is before",
+              week,
+              selectedDate,
+              newSelectedDate,
+            });
+            setSelectedDate(newSelectedDate);
+            setJumpToDate(newSelectedDate);
+          } else {
+            const newSelectedDate = addDays(selectedDate, 7);
+            console.log({
+              msg: "is after",
+              week,
+              selectedDate,
+              newSelectedDate,
+            });
+            setSelectedDate(newSelectedDate);
+            setJumpToDate(newSelectedDate);
+          }
+        } else {
+          console.log({ msg: "is within", selectedDate });
+        }
+      }
+    },
+    [setSelectedDate, setJumpToDate, selectedDate],
+  );
+
   return (
     <>
       <View className="mb-2 flex flex-row items-center justify-between">
@@ -292,7 +329,7 @@ const Header = ({
           </Text>
           <Pressable
             onPress={() => {
-              // setSelectedDate(today);
+              setSelectedDate(today);
               setJumpToDate(today);
             }}
             className="relative">
@@ -316,10 +353,14 @@ const Header = ({
               setJumpToDate={setJumpToDate}
             />
           )}
-          estimatedItemSize={334}
+          estimatedItemSize={374}
           horizontal
           pagingEnabled
           ref={scrollViewRef}
+          showsHorizontalScrollIndicator={false}
+          // See: https://stackoverflow.com/questions/45868284/how-to-get-currently-visible-index-in-rn-flat-list
+          onViewableItemsChanged={viewableItemsHandler}
+          viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
         />
       </View>
     </>
@@ -329,6 +370,7 @@ const Header = ({
 const Week = ({
   week,
   selectedDate,
+  setSelectedDate,
   setJumpToDate,
 }: {
   week: Interval;
@@ -347,6 +389,7 @@ const Week = ({
           <Text className="text-white">{format(d, "E")}</Text>
           <Pressable
             onPress={() => {
+              setSelectedDate(d);
               setJumpToDate(d);
             }}
             className={classNames({
@@ -410,7 +453,7 @@ const Timeline = ({
         setSelectedDate(visibleDate);
       }
     },
-    [setSelectedDate],
+    [],
   );
 
   useEffect(() => {
@@ -431,7 +474,7 @@ const Timeline = ({
         {todayIndex !== -1 && (
           <FlashList
             data={timeline}
-            estimatedItemSize={94.6}
+            estimatedItemSize={95}
             initialScrollIndex={todayIndex}
             renderItem={({ item, index }) => (
               <TimelineCardResolver
