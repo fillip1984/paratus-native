@@ -7,9 +7,13 @@ import { localDb } from "@/db";
 import { bloodPressureReadings } from "@/db/schema";
 import { createActivitiesFromRoutine } from "@/stores/activityStore";
 import { deleteRoutine, findRoutines } from "@/stores/routineStore";
+import { useSignOut, useUser } from "@/utils/auth";
 
 export default function Preferences() {
   const [rebuilding, setRebuilding] = useState(false);
+
+  const user = useUser();
+  const signOut = useSignOut();
 
   const confirmRebuild = () => {
     Alert.alert(
@@ -70,6 +74,16 @@ export default function Preferences() {
 
   return (
     <SafeAreaView className="bg-stone-800">
+      <View className="p-2">
+        {/* <Text className="text-white">User: {user?.name}</Text> */}
+        <Pressable
+          onPress={signOut}
+          className="mx-auto w-1/2 rounded bg-yellow-800 px-4 py-2">
+          <Text className="text-center text-2xl uppercase text-white">
+            Sign out
+          </Text>
+        </Pressable>
+      </View>
       <View className="h-full p-2">
         <Text className="text-xl text-white">
           Rebuilding activities will recreate all activities for all routines.

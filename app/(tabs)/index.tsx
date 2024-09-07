@@ -278,11 +278,10 @@ const Header = ({
 }) => {
   const scrollViewRef = useRef<FlashList<Interval<Date>>>(null);
 
-  const [isCalendarPaged, setIsCalendarPaged] = useState(false);
   const [activeWeek, setActiveWeek] = useState<Interval<Date>>();
 
   useEffect(() => {
-    console.log({ msg: "header version", selectedDate });
+    // console.log({ msg: "header version", selectedDate });
     const item = [lastWeek, thisWeek, nextWeek].find((w) =>
       isWithinInterval(selectedDate, w),
     );
@@ -291,19 +290,19 @@ const Header = ({
   }, [selectedDate, lastWeek, thisWeek, nextWeek]);
 
   useEffect(() => {
-    console.log({ msg: "header version2", selectedDate, activeWeek });
+    // console.log({ msg: "header version2", selectedDate, activeWeek });
     if (!activeWeek) {
       return;
     }
 
     if (!isWithinInterval(selectedDate, activeWeek)) {
       if (isBefore(selectedDate, activeWeek.start)) {
-        console.log("before");
+        // console.log("before");
         const newDate = addDays(selectedDate, 7);
         setSelectedDate(newDate);
         setJumpToDate(newDate);
       } else {
-        console.log("after");
+        // console.log("after");
         const newDate = addDays(selectedDate, -7);
         setSelectedDate(newDate);
         setJumpToDate(newDate);
@@ -330,10 +329,6 @@ const Header = ({
           </Text>
           <Pressable
             onPress={() => {
-              console.log(
-                "user clicked on Today calendar UI, updating selected date: " +
-                  today,
-              );
               setSelectedDate(today);
               setJumpToDate(today);
             }}
@@ -394,10 +389,6 @@ const Week = ({
           <Text className="text-white">{format(d, "E")}</Text>
           <Pressable
             onPress={() => {
-              console.log(
-                "user clicked on day in calendar UI, updating selected date: " +
-                  d,
-              );
               setSelectedDate(d);
               setJumpToDate(d);
             }}
@@ -459,10 +450,6 @@ const Timeline = ({
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems[0]) {
         const visibleDate = (viewableItems[0].item as TimelineEntry).date;
-        console.log(
-          "updating selected date so that calendar UI reflects current day: " +
-            visibleDate,
-        );
         setSelectedDate(visibleDate);
       }
     },

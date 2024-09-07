@@ -1,120 +1,68 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import "../global.css";
+
 import NetInfo from "@react-native-community/netinfo";
-import {
-  QueryClient,
-  QueryClientProvider,
-  focusManager,
-  onlineManager,
-} from "@tanstack/react-query";
-import { useFonts } from "expo-font";
+import { focusManager, onlineManager } from "@tanstack/react-query";
 import * as LocalAuthentication from "expo-local-authentication";
 import { PermissionStatus } from "expo-modules-core";
 import * as Notifications from "expo-notifications";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
+import { SplashScreen, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useState } from "react";
-import {
-  AppState,
-  AppStateStatus,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  Text,
-  View,
-} from "react-native";
+import type { AppStateStatus } from "react-native";
+import { AppState, Platform, Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import { runMigrations } from "@/db";
 import { handleNotification } from "@/notifications";
+import { useSignIn, useSignOut, useUser } from "@/utils/auth";
 
-import "../global.css";
-
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: "(tabs)",
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  // set font
-  const [loaded, error] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-    ...FontAwesome.font,
+const requestNotificationPermission = async () => {
+  const { status } = await Notifications.requestPermissionsAsync();
+  return status;
+};
+
+const requestAndAuthenticateViaBiometrics = async () => {
+  const authenticated = await LocalAuthentication.authenticateAsync({
+    promptMessage: "Authenticate with Face ID",
   });
 
-  // setup biometric/login
-  // TODO: need to figure out how to make this an environment variable. It's a pain to constantly have to authenticate during local development
+  if (authenticated.success) {
+    return true;
+  } else {
+    console.warn(authenticated.error);
+    return false;
+  }
+};
+
+export default function RootLayoutNav() {
+  const [loaded, setLoaded] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const authenticate = async () => {
-    // const hasHardware = await LocalAuthentication.hasHardwareAsync();
-    // const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-    const authenticated = await LocalAuthentication.authenticateAsync({
-      promptMessage: "Authenticate with Face ID",
-    });
-
-    if (authenticated.success) {
-      setAuthenticated(true);
-    } else {
-      console.warn(authenticated.error);
-      setAuthenticated(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!authenticated) {
-      authenticate();
-    }
-  }, []);
-
-  // check if we have permission to send notifications
   const [notificationsPermitted, setNotificationsPermitted] =
     useState<PermissionStatus>(PermissionStatus.UNDETERMINED);
 
-  const requestNotificationPermission = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    setNotificationsPermitted(status);
-  };
-
-  // needed for trpc/Tanstack Query to know if the device is online (prevents calls if disconnected)
-  // https://tanstack.com/query/latest/docs/framework/react/react-native#online-status-management
-  onlineManager.setEventListener((setOnline) => {
-    return NetInfo.addEventListener((state) => {
-      setOnline(!!state.isConnected);
-    });
-  });
-
-  // causes trpc/Tanstack Query to refetch on route change
-  // https://tanstack.com/query/latest/docs/framework/react/react-native#refetch-on-app-focus
-  const onAppStateChange = (status: AppStateStatus) => {
-    if (Platform.OS !== "web") {
-      focusManager.setFocused(status === "active");
-    }
-  };
-
+  // effects to run on startup
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", onAppStateChange);
-    return () => subscription.remove();
+    async function startup() {
+      setLoaded(false);
+      console.log("Performing effects on startup");
+      await runMigrations();
+
+      // request to send notifications
+      const notificationPermStatus = await requestNotificationPermission();
+      setNotificationsPermitted(notificationPermStatus);
+
+      // request to use biometric hardware for authentication
+      const biometricsResult = await requestAndAuthenticateViaBiometrics();
+      setAuthenticated(biometricsResult);
+      setLoaded(true);
+      console.log("Performed effects on startup");
+    }
+
+    startup();
   }, []);
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  // effects to run on loaded
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-      requestNotificationPermission();
-    }
-  }, [loaded]);
 
   // registers a notification handler for when notifications are triggered and the app is open
   useEffect(() => {
@@ -124,77 +72,125 @@ export default function RootLayout() {
     return () => listener.remove();
   }, [notificationsPermitted]);
 
-  // creates a trpc/Tanstack Query query client
-  const [queryClient] = useState(() => new QueryClient());
+  // causes trpc/Tanstack Query to refetch on route change
+  // https://tanstack.com/query/latest/docs/framework/react/react-native#refetch-on-app-focus
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      "change",
+      (status: AppStateStatus) => {
+        if (Platform.OS !== "web") {
+          focusManager.setFocused(status === "active");
+        }
+      },
+    );
+    return () => subscription.remove();
+  }, []);
 
-  // what view to return if not yet loaded
+  // needed for trpc/Tanstack Query to know if the device is online (prevents calls if disconnected)
+  // https://tanstack.com/query/latest/docs/framework/react/react-native#online-status-management
+  useEffect(() => {
+    onlineManager.setEventListener((setOnline) => {
+      return NetInfo.addEventListener((state) => {
+        setOnline(!!state.isConnected);
+      });
+    });
+
+    // return () => not sure how to release here?!
+  }, []);
+
+  useEffect(() => {
+    async function hideSplash() {
+      console.log("we are loaded!");
+      await SplashScreen.hideAsync();
+    }
+    if (loaded) {
+      hideSplash();
+    }
+  }, [loaded]);
+
   if (!loaded) {
     return null;
   }
 
-  // view to return if loaded but not authenticated
-  if (loaded && !authenticated) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (loaded) {
     return (
       <>
-        <SafeAreaView className="bg-stone-800">
-          <View className="flex h-full items-center justify-center gap-8 bg-stone-900 px-2">
-            <Text className="text-3xl text-white">Sign in</Text>
-            <Pressable onPress={authenticate}>
-              <MaterialCommunityIcons
-                name="face-recognition"
-                size={48}
-                color="white"
-              />
-            </Pressable>
-          </View>
-        </SafeAreaView>
+        {/* <TRPCProvider> */}
+        {authenticated ? (
+          <MainLayout />
+        ) : (
+          <MobileAuth setAuthenticated={setAuthenticated} />
+        )}
+        {/* </TRPCProvider> */}
         <StatusBar style="light" />
       </>
     );
   }
-
-  // what view to return if loaded and authenticated
-  if (loaded && authenticated) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <RootLayoutNav />
-      </QueryClientProvider>
-    );
-  }
 }
 
-function RootLayoutNav() {
+function MobileAuth({
+  setAuthenticated,
+}: {
+  setAuthenticated: Dispatch<SetStateAction<boolean>>;
+}) {
+  const user = useUser();
+  const signIn = useSignIn();
+  const signOut = useSignOut();
+
+  useEffect(() => {
+    // if (user) {
+    //   setAuthenticated(true);
+    // }
+  }, [user, setAuthenticated]);
+
   return (
-    <>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(todos)/[id]" options={{ presentation: "modal" }} />
-        <Stack.Screen
-          name="(routines)/[id]"
-          options={{ presentation: "modal" }}
-        />
-        <Stack.Screen
-          name="(modals)/preferences"
-          options={{ presentation: "modal" }}
-        />
-        <Stack.Screen
-          name="(modals)/interactions/bloodPressure/[activityId]"
-          options={{ presentation: "modal" }}
-        />
-        <Stack.Screen
-          name="(modals)/interactions/runModal"
-          options={{ presentation: "modal" }}
-        />
-        <Stack.Screen
-          name="(modals)/interactions/weighIn/[activityId]"
-          options={{ presentation: "modal" }}
-        />
-        <Stack.Screen
-          name="(modals)/interactions/note/[activityId]"
-          options={{ presentation: "modal" }}
-        />
-      </Stack>
-      <StatusBar style="light" />
-    </>
+    <SafeAreaView>
+      <View className="flex h-full items-center justify-center">
+        <Text className="pb-2 text-center text-xl font-semibold text-black">
+          {/* {user?.name ?? "Not logged in"} */}
+        </Text>
+        {/* <Pressable
+          onPress={() => (user ? signOut() : signIn())}
+          className="rounded bg-blue-500 px-4 py-2">
+          <Text className="text-xl text-white">
+            {user ? "Sign Out" : "Sign In With provider"}
+          </Text>
+        </Pressable> */}
+      </View>
+    </SafeAreaView>
   );
 }
+
+const MainLayout = () => {
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(todos)/[id]" options={{ presentation: "modal" }} />
+      <Stack.Screen
+        name="(routines)/[id]"
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="(modals)/preferences"
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="(modals)/interactions/bloodPressure/[activityId]"
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="(modals)/interactions/runModal"
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="(modals)/interactions/weighIn/[activityId]"
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="(modals)/interactions/note/[activityId]"
+        options={{ presentation: "modal" }}
+      />
+    </Stack>
+  );
+};
